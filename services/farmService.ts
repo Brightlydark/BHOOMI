@@ -129,7 +129,7 @@ export const fetchNearbyFarms = async (
     
     return farms;
   } catch (error) {
-    console.log('[farmService] API unavailable, falling back to mock farms data.');
+    // API unavailable, falling back to mock farms data
     
     // Fallback to cached data
     const cachedFarms = await getFarmsFromCache();
@@ -172,7 +172,7 @@ export const fetchInsights = async (
     
     return insights;
   } catch (error) {
-    console.log('[farmService] API unavailable, falling back to mock insights data.');
+    // API unavailable, falling back to mock insights data
     
     // Fallback to cached data
     const cachedInsights = await getInsightsFromCache();

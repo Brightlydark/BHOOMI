@@ -1,9 +1,9 @@
-// components/maps/FarmMarker.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Marker, Callout } from 'react-native-maps';
+import { Marker } from 'react-native-maps';
 import { Farm } from '../../types/farm';
-import { Ionicons } from '@expo/vector-icons';
+import { Sprout } from 'lucide-react-native';
+import { MotiView } from 'moti';
 
 interface FarmMarkerProps {
   farm: Farm;
@@ -29,143 +29,86 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
     }
   };
 
-  const getHealthIcon = (health: Farm['cropHealth']) => {
-    switch (health) {
-      case 'good':
-        return 'checkmark-circle';
-      case 'moderate':
-        return 'alert-circle';
-      case 'poor':
-        return 'close-circle';
-      default:
-        return 'help-circle';
-    }
-  };
+  const healthColor = getHealthColor(farm.cropHealth);
 
   return (
     <Marker
       coordinate={farm.location}
-      onPress={() => onPress(farm)}
-      pinColor={isSelected ? '#4F46E5' : getHealthColor(farm.cropHealth)}
+      onPress={(e) => {
+        e.stopPropagation();
+        onPress(farm);
+      }}
+      style={{ zIndex: isSelected ? 10 : 1 }}
+      anchor={{ x: 0.5, y: 1 }}
     >
-      <Callout tooltip>
-        <View style={styles.calloutContainer}>
-          <View style={styles.calloutHeader}>
-            <Text style={styles.farmName}>{farm.name}</Text>
-            <View
-              style={[
-                styles.healthBadge,
-                { backgroundColor: getHealthColor(farm.cropHealth) },
-              ]}
-            >
-              <Ionicons
-                name={getHealthIcon(farm.cropHealth)}
-                size={14}
-                color="#FFFFFF"
-              />
-              <Text style={styles.healthText}>
-                {farm.cropHealth.charAt(0).toUpperCase() + farm.cropHealth.slice(1)}
-              </Text>
-            </View>
+      <MotiView
+        animate={{
+          scale: isSelected ? 1.15 : 1,
+          translateY: isSelected ? -8 : 0,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: 250,
+          damping: 20,
+        }}
+        style={styles.markerWrapper}
+      >
+        <View style={[styles.pill, { backgroundColor: isSelected ? '#111827' : '#FFFFFF', borderColor: isSelected ? '#111827' : healthColor }]}>
+          <View style={[styles.iconContainer, { backgroundColor: healthColor + '20' }]}>
+            <Sprout size={14} color={healthColor} />
           </View>
-
-          <Text style={styles.address} numberOfLines={2}>
-            {farm.address}
+          <Text style={[styles.label, { color: isSelected ? '#FFFFFF' : '#111827' }]}>
+            {farm.name}
           </Text>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Ionicons name="water" size={16} color="#3B82F6" />
-              <Text style={styles.statLabel}>Moisture</Text>
-              <Text style={styles.statValue}>{farm.soilMoisture}%</Text>
-            </View>
-
-            <View style={styles.statItem}>
-              <Ionicons name="thermometer" size={16} color="#EF4444" />
-              <Text style={styles.statLabel}>Temperature</Text>
-              <Text style={styles.statValue}>{farm.temperature}°C</Text>
-            </View>
-          </View>
-
-          {farm.distance && (
-            <Text style={styles.distance}>
-              📍 {farm.distance.toFixed(1)} km away
-            </Text>
-          )}
         </View>
-      </Callout>
+        <View style={[styles.triangle, { borderTopColor: isSelected ? '#111827' : healthColor }]} />
+      </MotiView>
     </Marker>
   );
 };
 
 const styles = StyleSheet.create({
-  calloutContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    width: 260,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  calloutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  markerWrapper: {
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
+    paddingBottom: 2, // Space for triangle
   },
-  farmName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    flex: 1,
-  },
-  healthBadge: {
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 6,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
   },
-  healthText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  address: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 12,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  statItem: {
+  iconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
   },
-  statLabel: {
-    fontSize: 10,
-    color: '#9CA3AF',
-    marginTop: 4,
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
   },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginTop: 2,
-  },
-  distance: {
-    fontSize: 11,
-    color: '#6B7280',
-    marginTop: 8,
-    textAlign: 'center',
+  triangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 0,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    marginTop: -1,
   },
 });

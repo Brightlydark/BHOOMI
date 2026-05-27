@@ -69,8 +69,18 @@ export default function ProfileScreen() {
   /**
    * Contact support
    */
-  const handleContactSupport = () => {
-    Linking.openURL('mailto:support@smartagri.app?subject=Support%20Request');
+  const handleContactSupport = async () => {
+    const url = 'mailto:support@smartagri.app?subject=Support%20Request';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'No email app installed on this device.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not open email app.');
+    }
   };
 
   const langLabels: Record<string, string> = {

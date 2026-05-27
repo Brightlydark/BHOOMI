@@ -1,9 +1,18 @@
-// components/insights/InsightCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Insight } from '../../types/insight';
 import { Card } from '../common/Card';
-import { Ionicons } from '@expo/vector-icons';
+import { 
+  FlaskConical, 
+  CloudSun, 
+  Droplets, 
+  Leaf, 
+  Bug, 
+  Sprout, 
+  Info,
+  Lightbulb,
+  ChevronRight
+} from 'lucide-react-native';
 
 interface InsightCardProps {
   insight: Insight;
@@ -12,155 +21,173 @@ interface InsightCardProps {
 }
 
 export const InsightCard: React.FC<InsightCardProps> = ({ insight, onPress, compact = false }) => {
-  const getSeverityColor = (severity: Insight['severity']) => {
+  const getSeverityStyle = (severity: Insight['severity']) => {
     switch (severity) {
-      case 'low':
-        return '#10B981';
-      case 'medium':
-        return '#F59E0B';
-      case 'high':
-        return '#EF4444';
-      case 'critical':
-        return '#DC2626';
-      default:
-        return '#6B7280';
+      case 'low': return { bg: '#ECFDF5', text: '#10B981', border: '#10B981' };
+      case 'medium': return { bg: '#FFFBEB', text: '#F59E0B', border: '#FCD34D' };
+      case 'high': return { bg: '#FEF2F2', text: '#EF4444', border: '#FCA5A5' };
+      case 'critical': return { bg: '#FEF2F2', text: '#DC2626', border: '#DC2626' };
+      default: return { bg: '#F9FAFB', text: '#6B7280', border: '#E5E7EB' };
     }
   };
 
-  const getTypeIcon = (type: Insight['type']) => {
+  const severityStyle = getSeverityStyle(insight.severity);
+
+  const renderIcon = (type: Insight['type']) => {
+    const props = { size: 20, color: severityStyle.text };
     switch (type) {
-      case 'soil_analysis':
-        return 'flask';
-      case 'weather_forecast':
-        return 'cloud';
-      case 'irrigation_recommendation':
-        return 'water';
-      case 'fertilizer_recommendation':
-        return 'leaf';
-      case 'pest_control':
-        return 'bug';
-      case 'crop_suggestion':
-        return 'nutrition';
-      default:
-        return 'information-circle';
+      case 'soil_analysis': return <FlaskConical {...props} />;
+      case 'weather_forecast': return <CloudSun {...props} />;
+      case 'irrigation_recommendation': return <Droplets {...props} />;
+      case 'fertilizer_recommendation': return <Leaf {...props} />;
+      case 'pest_control': return <Bug {...props} />;
+      case 'crop_suggestion': return <Sprout {...props} />;
+      default: return <Info {...props} />;
     }
   };
 
   return (
-    <Card onPress={onPress}>
+    <Card 
+      onPress={onPress} 
+      style={[
+        styles.card, 
+        compact ? styles.cardCompact : undefined,
+        { borderColor: severityStyle.border + '40', backgroundColor: '#FFFFFF' }
+      ]}
+    >
       <View style={styles.header}>
-        <View style={styles.iconContainer}>
-          <Ionicons
-            name={getTypeIcon(insight.type)}
-            size={24}
-            color="#4F46E5"
-          />
+        <View style={[styles.iconContainer, { backgroundColor: severityStyle.bg }]}>
+          {renderIcon(insight.type)}
         </View>
         <View style={styles.headerText}>
-          <Text style={styles.title}>{insight.title}</Text>
-          <View
-            style={[
-              styles.severityBadge,
-              { backgroundColor: getSeverityColor(insight.severity) },
-            ]}
-          >
-            <Text style={styles.severityText}>
-              {insight.severity.toUpperCase()}
-            </Text>
-          </View>
+          <Text style={styles.title} numberOfLines={1}>{insight.title}</Text>
+          <Text style={styles.timestamp}>
+            {new Date(insight.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </Text>
+        </View>
+        <View style={[styles.severityBadge, { backgroundColor: severityStyle.bg, borderColor: severityStyle.border }]}>
+          <Text style={[styles.severityText, { color: severityStyle.text }]}>
+            {insight.severity.toUpperCase()}
+          </Text>
         </View>
       </View>
 
-      <Text style={styles.description}>{insight.description}</Text>
+      <Text style={styles.description} numberOfLines={compact ? 2 : undefined}>
+        {insight.description}
+      </Text>
 
-      {!compact && (
+      {!compact && insight.recommendation && (
         <View style={styles.recommendationContainer}>
           <View style={styles.recommendationHeader}>
-            <Ionicons name="bulb" size={16} color="#F59E0B" />
+            <Lightbulb size={14} color="#F59E0B" />
             <Text style={styles.recommendationLabel}>Recommendation</Text>
           </View>
           <Text style={styles.recommendation}>{insight.recommendation}</Text>
         </View>
       )}
 
-      <Text style={styles.timestamp}>
-        {new Date(insight.createdAt).toLocaleDateString()}
-      </Text>
+      {onPress && compact && (
+        <View style={styles.actionRow}>
+          <Text style={[styles.actionText, { color: severityStyle.text }]}>View Details</Text>
+          <ChevronRight size={14} color={severityStyle.text} />
+        </View>
+      )}
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
+  card: {
+    marginBottom: 12,
+    borderWidth: 1,
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardCompact: {
+    padding: 14,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#EEF2FF',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   headerText: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#111827',
-    flex: 1,
+    marginBottom: 2,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   severityBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 1,
     marginLeft: 8,
   },
   severityText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   description: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#4B5563',
     lineHeight: 20,
     marginBottom: 12,
   },
   recommendationContainer: {
     backgroundColor: '#FFFBEB',
+    padding: 12,
+    borderRadius: 10,
     borderLeftWidth: 3,
     borderLeftColor: '#F59E0B',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
   },
   recommendationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   recommendationLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#92400E',
+    color: '#D97706',
     marginLeft: 6,
   },
   recommendation: {
     fontSize: 13,
-    color: '#78350F',
+    color: '#92400E',
     lineHeight: 18,
   },
-  timestamp: {
-    fontSize: 11,
-    color: '#9CA3AF',
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
     marginTop: 4,
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
   },
 });

@@ -62,7 +62,6 @@ apiClient.interceptors.response.use(
       }
     } else if (error.request) {
       // Request made but no response — expected when no backend is configured
-      console.log('[api] No backend response (using mock data fallback).');
     } else {
       console.error('Request error:', error.message);
     }

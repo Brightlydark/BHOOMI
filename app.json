@@ -19,7 +19,9 @@
           "locationAlwaysAndWhenInUsePermission": "Allow Smart Agriculture to access your location to show nearby farms.",
           "locationWhenInUsePermission": "Allow Smart Agriculture to access your location to show nearby farms."
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font"
     ],
     "android": {
       "adaptiveIcon": {

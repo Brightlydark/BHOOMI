@@ -1,5 +1,4 @@
-// app/(tabs)/map.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,43 +6,38 @@ import {
   Pressable,
   Text,
   ActivityIndicator,
-  Alert,
-  ScrollView,
-  Dimensions,
+  Keyboard,
 } from 'react-native';
-import MapView, { PROVIDER_DEFAULT, Region, UrlTile } from 'react-native-maps';
-
+import BottomSheet from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
-import { FarmMarker } from '../../components/maps/FarmMarker';
+import { MapViewWrapper } from '../../components/maps/MapViewWrapper';
 import { Card } from '../../components/common/Card';
 import { EmptyState } from '../../components/common/EmptyState';
 import { useLocation } from '../../hooks/useLocation';
 import { useFarms } from '../../hooks/useFarms';
 import { Farm } from '../../types/farm';
 
-const { width, height } = Dimensions.get('window');
-
 export default function MapScreen() {
   const { t } = useTranslation();
-  const mapRef = useRef<MapView>(null);
+  const router = useRouter();
+  const mapRef = useRef<any>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ['30%', '50%'], []);
   
-  // Location hook
   const {
     location,
     loading: locationLoading,
-    error: locationError,
     hasPermission,
     requestPermission,
   } = useLocation();
 
-  // Farms hook
   const {
     farms,
     loading: farmsLoading,
-    error: farmsError,
     refreshFarms,
     searchFarms,
     selectedFarm,
@@ -51,36 +45,37 @@ export default function MapScreen() {
   } = useFarms(location);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFarmDetails, setShowFarmDetails] = useState(false);
 
-  /**
-   * Handle permission request
-   */
   const handlePermissionRequest = async () => {
     await requestPermission();
   };
 
-  /**
-   * Handle farm marker press
-   */
   const handleMarkerPress = (farm: Farm) => {
     selectFarm(farm);
-    setShowFarmDetails(true);
+    bottomSheetRef.current?.expand();
     
-    // Animate to farm location
     if (mapRef.current) {
       mapRef.current.animateToRegion({
-        latitude: farm.location.latitude,
+        latitude: farm.location.latitude - 0.005, // Offset slightly to account for bottom sheet
         longitude: farm.location.longitude,
         latitudeDelta: 0.02,
         longitudeDelta: 0.02,
-      });
+      }, 500);
     }
   };
 
-  /**
-   * Handle search
-   */
+  const handleMapPress = () => {
+    Keyboard.dismiss();
+    selectFarm(null as any);
+    bottomSheetRef.current?.close();
+  };
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      selectFarm(null as any);
+    }
+  }, [selectFarm]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.length > 2) {
@@ -90,9 +85,6 @@ export default function MapScreen() {
     }
   };
 
-  /**
-   * Center map on user location
-   */
   const centerOnUser = () => {
     if (location && mapRef.current) {
       mapRef.current.animateToRegion({
@@ -104,21 +96,6 @@ export default function MapScreen() {
     }
   };
 
-  /**
-   * Get initial region
-   */
-  const getInitialRegion = (): Region | undefined => {
-    if (!location) return undefined;
-    
-    return {
-      latitude: location.latitude,
-      longitude: location.longitude,
-      latitudeDelta: 0.1,
-      longitudeDelta: 0.1,
-    };
-  };
-
-  // Show permission prompt if not granted
   if (!hasPermission && !locationLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -169,35 +146,25 @@ export default function MapScreen() {
             <Text style={styles.loadingText}>{t('common.loading')}</Text>
           </View>
         ) : location ? (
-          <MapView
+          <MapViewWrapper
             ref={mapRef}
-            provider={PROVIDER_DEFAULT}
             style={styles.map}
-            initialRegion={getInitialRegion()}
+            initialRegion={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+              latitudeDelta: 0.1,
+              longitudeDelta: 0.1,
+            }}
             showsUserLocation
             showsMyLocationButton={false}
             showsCompass
             loadingEnabled
             mapType="none"
-          >
-            {/* OpenStreetMap tile overlay */}
-            <UrlTile
-              urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-              maximumZ={19}
-              flipY={false}
-              tileSize={256}
-              zIndex={-1}
-            />
-            {farms.map((farm) => (
-              <FarmMarker
-                key={farm.id}
-                farm={farm}
-                isSelected={selectedFarm?.id === farm.id}
-                onPress={handleMarkerPress}
-              />
-            ))}
-          </MapView>
-
+            onPress={handleMapPress}
+            farms={farms}
+            selectedFarm={selectedFarm}
+            onMarkerPress={handleMarkerPress}
+          />
         ) : (
           <EmptyState
             icon="location-outline"
@@ -211,30 +178,36 @@ export default function MapScreen() {
           <Pressable style={styles.controlButton} onPress={centerOnUser}>
             <Ionicons name="locate" size={24} color="#10B981" />
           </Pressable>
-          
           <Pressable style={styles.controlButton} onPress={refreshFarms}>
             <Ionicons name="refresh" size={24} color="#10B981" />
           </Pressable>
         </View>
-
-        {/* Farm Count Badge */}
-        <View style={styles.countBadge}>
-          <Ionicons name="business" size={16} color="#10B981" />
-          <Text style={styles.countText}>
-            {farms.length} {t('map.nearbyFarms')}
-          </Text>
-        </View>
       </View>
 
-      {/* Selected Farm Details */}
-      {showFarmDetails && selectedFarm && (
-        <View style={styles.detailsContainer}>
-          <Card style={styles.farmDetailsCard}>
+      {/* Bottom Sheet for Farm Details */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        onChange={handleSheetChanges}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.bottomSheetIndicator}
+      >
+        {selectedFarm && (
+          <View style={styles.sheetContent}>
             <View style={styles.detailsHeader}>
               <Text style={styles.detailsTitle}>{selectedFarm.name}</Text>
-              <Pressable onPress={() => setShowFarmDetails(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
-              </Pressable>
+              <View
+                style={[
+                  styles.healthBadge,
+                  { backgroundColor: selectedFarm.cropHealth === 'good' ? '#10B981' : selectedFarm.cropHealth === 'moderate' ? '#F59E0B' : '#EF4444' },
+                ]}
+              >
+                <Text style={styles.healthText}>
+                  {selectedFarm.cropHealth.charAt(0).toUpperCase() + selectedFarm.cropHealth.slice(1)}
+                </Text>
+              </View>
             </View>
 
             <Text style={styles.detailsAddress}>{selectedFarm.address}</Text>
@@ -251,244 +224,54 @@ export default function MapScreen() {
                 <Text style={styles.detailsLabel}>{t('map.temperature')}</Text>
                 <Text style={styles.detailsValue}>{selectedFarm.temperature}°C</Text>
               </View>
-
-              <View style={styles.detailsItem}>
-                <Ionicons name="leaf" size={20} color="#10B981" />
-                <Text style={styles.detailsLabel}>{t('map.cropHealth')}</Text>
-                <Text style={styles.detailsValue}>
-                  {t(`map.healthStatus.${selectedFarm.cropHealth}`)}
-                </Text>
-              </View>
-
-              {selectedFarm.distance !== undefined && (
-                <View style={styles.detailsItem}>
-                  <Ionicons name="navigate" size={20} color="#8B5CF6" />
-                  <Text style={styles.detailsLabel}>{t('map.distance')}</Text>
-                  <Text style={styles.detailsValue}>
-                    {selectedFarm.distance.toFixed(1)} km
-                  </Text>
-                </View>
-              )}
             </View>
 
-            {selectedFarm.cropType && (
-              <View style={styles.cropTypeContainer}>
-                <Text style={styles.cropTypeLabel}>Current Crop:</Text>
-                <Text style={styles.cropTypeValue}>{selectedFarm.cropType}</Text>
-              </View>
-            )}
-          </Card>
-        </View>
-      )}
-
-      {/* Loading Overlay */}
-      {farmsLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="small" color="#FFFFFF" />
-        </View>
-      )}
+            <Pressable 
+              style={styles.viewDetailsButton}
+              onPress={() => {
+                bottomSheetRef.current?.close();
+                router.push(`/farm/${selectedFarm.id}`);
+              }}
+            >
+              <Text style={styles.viewDetailsText}>View Farm Details</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        )}
+      </BottomSheet>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-  },
-  mapContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  mapControls: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-    gap: 12,
-  },
-  controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  countBadge: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  countText: {
-    marginLeft: 6,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  detailsContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-  },
-  farmDetailsCard: {
-    backgroundColor: '#FFFFFF',
-  },
-  detailsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  detailsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    flex: 1,
-  },
-  detailsAddress: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 16,
-  },
-  detailsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  detailsItem: {
-    flex: 1,
-    minWidth: '45%',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-  },
-  detailsLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  detailsValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginTop: 2,
-  },
-  cropTypeContainer: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cropTypeLabel: {
-    fontSize: 14,
-    color: '#166534',
-    fontWeight: '500',
-  },
-  cropTypeValue: {
-    fontSize: 14,
-    color: '#166534',
-    fontWeight: '700',
-  },
-  permissionContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  permissionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#111827',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  permissionMessage: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  permissionButton: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  permissionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 80,
-    right: 16,
-    backgroundColor: '#10B981',
-    borderRadius: 20,
-    padding: 8,
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  header: { padding: 16, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 12, height: 48 },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 16, color: '#111827' },
+  mapContainer: { flex: 1, position: 'relative' },
+  map: { ...StyleSheet.absoluteFillObject },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' },
+  loadingText: { marginTop: 12, fontSize: 16, color: '#6B7280' },
+  mapControls: { position: 'absolute', right: 16, top: 16, gap: 12 },
+  controlButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3.84, elevation: 5 },
+  bottomSheetBackground: { backgroundColor: '#FFFFFF', borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 10 },
+  bottomSheetIndicator: { width: 40, height: 4, backgroundColor: '#D1D5DB', borderRadius: 2 },
+  sheetContent: { padding: 24 },
+  detailsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  detailsTitle: { fontSize: 22, fontWeight: '700', color: '#111827', flex: 1 },
+  healthBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  healthText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  detailsAddress: { fontSize: 14, color: '#6B7280', marginBottom: 24 },
+  detailsGrid: { flexDirection: 'row', gap: 16, marginBottom: 24 },
+  detailsItem: { flex: 1, alignItems: 'center', padding: 16, backgroundColor: '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: '#F3F4F6' },
+  detailsLabel: { fontSize: 12, color: '#6B7280', marginTop: 8 },
+  detailsValue: { fontSize: 18, fontWeight: '700', color: '#111827', marginTop: 4 },
+  viewDetailsButton: { backgroundColor: '#10B981', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 16, gap: 8 },
+  viewDetailsText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  permissionContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  permissionTitle: { fontSize: 22, fontWeight: '700', color: '#111827', marginTop: 16, marginBottom: 8 },
+  permissionMessage: { fontSize: 16, color: '#6B7280', textAlign: 'center', lineHeight: 24, marginBottom: 24 },
+  permissionButton: { backgroundColor: '#10B981', paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12 },
+  permissionButtonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
 });

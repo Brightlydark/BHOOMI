@@ -1,10 +1,10 @@
 // components/common/Card.tsx
 import React from 'react';
-import { View, StyleSheet, ViewStyle, Pressable } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, Pressable } from 'react-native';
 
 interface CardProps {
-  children: React.ReactNode;
-  style?: ViewStyle;
+  children?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
   onPress?: () => void;
   elevated?: boolean;
 }
@@ -34,14 +34,14 @@ export const Card: React.FC<CardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
   },
   elevated: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 3,
   },
 });

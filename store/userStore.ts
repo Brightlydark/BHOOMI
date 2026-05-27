@@ -12,6 +12,8 @@ interface UserState {
   // Actions
   setUser: (user: User) => void;
   updateUser: (updates: Partial<User>) => void;
+  login: (phone: string) => void;
+  completeSetup: (name: string) => void;
   setPreferences: (preferences: Partial<UserPreferences>) => void;
   setLanguage: (language: 'en' | 'hi' | 'kn') => void;
   setNotificationSettings: (settings: Partial<NotificationSettings>) => void;
@@ -48,6 +50,24 @@ export const useUserStore = create<UserState>()(
       updateUser: (updates) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
+        })),
+
+      login: (phone: string) => 
+        set({
+          user: {
+            id: Math.random().toString(36).substring(7),
+            name: '',
+            email: '',
+            phone,
+            location: { city: '', state: '', country: '' },
+            preferences: defaultPreferences,
+            createdAt: new Date(),
+          }
+        }),
+
+      completeSetup: (name: string) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, name } : null,
         })),
 
       setPreferences: (newPreferences) =>

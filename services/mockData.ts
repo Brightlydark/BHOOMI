@@ -145,35 +145,53 @@ export const generateInsights = (
     });
   }
 
-  // Soil moisture insights
-  if (avgMoisture < 45) {
-    insights.push({
-      id: `insight_${idCounter++}`,
-      type: 'irrigation_recommendation',
-      title: 'Low Soil Moisture Detected',
-      description: `Average soil moisture is ${avgMoisture.toFixed(1)}%, below optimal levels.`,
-      recommendation: 'Immediate irrigation recommended. Check irrigation system for leaks or blockages.',
-      severity: avgMoisture < 35 ? 'critical' : 'high',
-      createdAt: new Date(),
-      region,
-    });
-  }
 
-  // Crop health insights
-  if (poorHealthCount > farms.length * 0.3) {
-    insights.push({
-      id: `insight_${idCounter++}`,
-      type: 'fertilizer_recommendation',
-      title: 'Widespread Crop Health Issues',
-      description: `${poorHealthCount} farms showing poor crop health. This may indicate nutrient deficiency.`,
-      recommendation: 'Conduct soil testing. Apply NPK fertilizer (19:19:19) at 200kg/hectare. Consider foliar spray.',
-      severity: 'high',
-      createdAt: new Date(),
-      region,
-    });
-  }
+  // Farm-specific alerts
+  farms.forEach(farm => {
+    // Low moisture alert
+    if (farm.soilMoisture < 45) {
+      insights.push({
+        id: `insight_${idCounter++}_${farm.id}`,
+        type: 'irrigation_recommendation',
+        title: `Low Moisture at ${farm.name}`,
+        description: `${farm.name} is showing ${farm.soilMoisture}% soil moisture, which is below optimal levels.`,
+        recommendation: `Immediate irrigation recommended for ${farm.name}. Check irrigation system for leaks.`,
+        severity: farm.soilMoisture < 35 ? 'critical' : 'high',
+        createdAt: new Date(),
+        region,
+      });
+    }
 
-  // Seasonal recommendations
+    // High temperature alert
+    if (farm.temperature > 32) {
+      insights.push({
+        id: `insight_${idCounter++}_${farm.id}`,
+        type: 'weather_forecast',
+        title: `Heat Stress at ${farm.name}`,
+        description: `Temperature at ${farm.name} is ${farm.temperature}°C, causing potential heat stress.`,
+        recommendation: `Increase irrigation frequency. Consider shade nets if possible.`,
+        severity: farm.temperature > 35 ? 'critical' : 'medium',
+        createdAt: new Date(),
+        region,
+      });
+    }
+
+    // Poor health alert
+    if (farm.cropHealth === 'poor') {
+      insights.push({
+        id: `insight_${idCounter++}_${farm.id}`,
+        type: 'fertilizer_recommendation',
+        title: `Health Warning: ${farm.name}`,
+        description: `${farm.name} is showing poor crop health. This may indicate nutrient deficiency.`,
+        recommendation: `Conduct soil testing. Apply NPK fertilizer (19:19:19) at 200kg/hectare.`,
+        severity: 'high',
+        createdAt: new Date(),
+        region,
+      });
+    }
+  });
+
+  // Seasonal recommendations (General)
   const month = new Date().getMonth();
   
   if (month >= 5 && month <= 9) { // Monsoon season (June-October)
@@ -189,13 +207,13 @@ export const generateInsights = (
     });
   }
 
-  // Weather-based pest alert
+  // Weather-based pest alert (General)
   if (avgTemp > 28 && avgMoisture > 60) {
     insights.push({
       id: `insight_${idCounter++}`,
       type: 'pest_control',
       title: 'Pest Activity Alert',
-      description: 'High temperature and humidity create favorable conditions for pests.',
+      description: 'High temperature and humidity create favorable conditions for pests across farms.',
       recommendation: 'Monitor for common pests: stem borer, aphids. Use neem-based pesticides preventively.',
       severity: 'medium',
       createdAt: new Date(),
