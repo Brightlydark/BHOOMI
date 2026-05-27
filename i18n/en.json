@@ -1,0 +1,108 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "done": "Done",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "noData": "No data available",
+    "seeAll": "See all"
+  },
+  "nav": {
+    "home": "Home",
+    "map": "Map",
+    "insights": "Insights",
+    "profile": "Profile"
+  },
+  "home": {
+    "goodMorning": "Good Morning,",
+    "goodAfternoon": "Good Afternoon,",
+    "goodEvening": "Good Evening,",
+    "farmer": "Farmer",
+    "statFarms": "Farms",
+    "statMoisture": "Moisture",
+    "statTemp": "Avg Temp",
+    "cropHealthTitle": "Crop Health Overview",
+    "insightsTitle": "Recent Insights",
+    "noInsights": "No insights available yet",
+    "quickActions": "Quick Actions",
+    "actionMap": "View Map",
+    "actionInsights": "Insights",
+    "actionWeather": "Weather",
+    "actionProfile": "Profile"
+  },
+  "map": {
+    "title": "Farm Locations",
+    "searchPlaceholder": "Search farms...",
+    "myLocation": "My Location",
+    "nearbyFarms": "Nearby Farms",
+    "farmDetails": "Farm Details",
+    "soilMoisture": "Soil Moisture",
+    "temperature": "Temperature",
+    "cropHealth": "Crop Health",
+    "distance": "Distance",
+    "getDirections": "Get Directions",
+    "healthStatus": { "good": "Good", "moderate": "Moderate", "poor": "Poor" },
+    "permissions": {
+      "title": "Location Permission Required",
+      "message": "We need your location to show nearby farms and provide localized recommendations.",
+      "grant": "Grant Permission",
+      "denied": "Location permission denied. Please enable it in settings."
+    }
+  },
+  "insights": {
+    "title": "Insights & Recommendations",
+    "filterAll": "All",
+    "filterIrrigation": "Irrigation",
+    "filterSoil": "Soil",
+    "filterWeather": "Weather",
+    "filterCrop": "Crops",
+    "filterPest": "Pest",
+    "summaryTotal": "Total",
+    "summaryCritical": "Critical",
+    "summaryFarms": "Farms",
+    "errorTitle": "Could not load insights",
+    "errorDescription": "Check your connection and try again.",
+    "emptyTitle": "No insights yet",
+    "emptyDescription": "Insights will appear once farm data is loaded."
+  },
+  "profile": {
+    "title": "Profile",
+    "defaultName": "Farmer",
+    "locationNotSet": "Location not set",
+    "settingsTitle": "Settings",
+    "language": "Language",
+    "notifPush": "Push Notifications",
+    "notifEmail": "Email Notifications",
+    "notifWeather": "Weather Alerts",
+    "notifIrrigation": "Irrigation Alerts",
+    "supportTitle": "Support",
+    "contactSupport": "Contact Support",
+    "faqTitle": "FAQ",
+    "faq": {
+      "q1": "How do I add a new farm?",
+      "a1": "Navigate to the Map screen and tap the '+' button to add a new farm location.",
+      "q2": "How accurate are the soil moisture readings?",
+      "a2": "Our readings are based on real-time sensor data with 95% accuracy.",
+      "q3": "Can I use the app offline?",
+      "a3": "Yes, the app caches recent data for offline viewing.",
+      "q4": "How do I change the language?",
+      "a4": "Go to Profile > Settings > Language and select your preferred language."
+    },
+    "logout": "Logout",
+    "logoutConfirmTitle": "Confirm Logout",
+    "logoutConfirmMessage": "Are you sure you want to logout?"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिंदी (Hindi)",
+    "kn": "ಕನ್ನಡ (Kannada)"
+  }
+}

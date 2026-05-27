@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Smart Agriculture",
+    "slug": "smart-agriculture",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10B981"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Smart Agriculture to access your location to show nearby farms.",
+          "locationWhenInUsePermission": "Allow Smart Agriculture to access your location to show nearby farms."
+        }
+      ]
+    ],
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#10B981"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow Smart Agriculture to access your location to show nearby farms.",
+        "NSLocationAlwaysUsageDescription": "Allow Smart Agriculture to access your location to show nearby farms."
+      }
+    },
+    "scheme": "smart-agri",
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
