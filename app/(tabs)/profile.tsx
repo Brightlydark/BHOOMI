@@ -1,5 +1,5 @@
 // app/(tabs)/profile.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Switch,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,6 +20,8 @@ import { LanguageSwitcher } from '../../components/settings/LanguageSwitcher';
 import { useUserStore } from '../../store/userStore';
 import { clearAuthToken } from '../../services/api';
 import { clearCache } from '../../services/farmService';
+import { useLocation } from '../../hooks/useLocation';
+import { getAddressFromCoordinates } from '../../services/locationService';
 
 // FAQ data
 const FAQ_ITEMS = [
@@ -30,10 +33,64 @@ const FAQ_ITEMS = [
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { user, preferences, setLanguage, setNotificationSettings, logout } = useUserStore();
+  const { user, preferences, setLanguage, setNotificationSettings, logout, updateUser } =
+    useUserStore();
+
+  const { location, hasPermission, requestPermission, loading: locationLoading } =
+    useLocation();
 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  const [locationResolving, setLocationResolving] = useState(false);
+
+  // Reverse geocode device location and cache it in the user profile
+  useEffect(() => {
+    if (!location) return;
+
+    const resolveAddress = async () => {
+      setLocationResolving(true);
+      try {
+        const address = await getAddressFromCoordinates(location);
+        setLocationLabel(address);
+
+        // Also persist into user store so it shows even without GPS on next open
+        if (user) {
+          const parts = address.split(', ');
+          updateUser({
+            location: {
+              city: parts[0] ?? '',
+              state: parts[1] ?? '',
+              country: parts[2] ?? 'India',
+            },
+          });
+        }
+      } catch {
+        setLocationLabel(
+          `${location.latitude.toFixed(3)}, ${location.longitude.toFixed(3)}`
+        );
+      } finally {
+        setLocationResolving(false);
+      }
+    };
+
+    resolveAddress();
+  // Only run when location coords change meaningfully
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.latitude, location?.longitude]);
+
+  /** Derive display label for location in the user card */
+  const displayLocation = (() => {
+    if (locationResolving) return null; // show spinner
+    if (locationLabel) return locationLabel;
+    // Fall back to stored user location
+    if (user?.location?.city) {
+      return user.location.state
+        ? `${user.location.city}, ${user.location.state}`
+        : user.location.city;
+    }
+    return null; // no location known
+  })();
 
   /**
    * Handle language change — update store + i18n
@@ -78,7 +135,7 @@ export default function ProfileScreen() {
       } else {
         Alert.alert('Error', 'No email app installed on this device.');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Could not open email app.');
     }
   };
@@ -97,22 +154,61 @@ export default function ProfileScreen() {
           <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         </View>
 
-        {/* User Info */}
+        {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
             <Ionicons name="person" size={36} color="#10B981" />
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
-              {user?.name ?? t('profile.defaultName')}
+              {user?.name || t('profile.defaultName')}
             </Text>
-            <Text style={styles.userLocation}>
-              {user?.location?.city
-                ? `${user.location.city}, ${user.location.state}`
-                : t('profile.locationNotSet')}
-            </Text>
+
+            {/* Location row */}
+            {locationLoading || locationResolving ? (
+              <View style={styles.locationRow}>
+                <ActivityIndicator size="small" color="#10B981" />
+                <Text style={styles.locationResolving}>Locating…</Text>
+              </View>
+            ) : displayLocation ? (
+              <View style={styles.locationRow}>
+                <Ionicons name="location" size={13} color="#10B981" />
+                <Text style={styles.userLocation}>{displayLocation}</Text>
+              </View>
+            ) : !hasPermission ? (
+              <Pressable
+                style={styles.grantLocationBtn}
+                onPress={async () => {
+                  await requestPermission();
+                }}
+              >
+                <Ionicons name="locate" size={13} color="#3B82F6" />
+                <Text style={styles.grantLocationText}>Grant location access</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={13} color="#9CA3AF" />
+                <Text style={[styles.userLocation, { color: '#9CA3AF' }]}>
+                  {t('profile.locationNotSet')}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
+
+        {/* Location permission banner if denied */}
+        {!hasPermission && !locationLoading && (
+          <Pressable style={styles.locationBanner} onPress={requestPermission}>
+            <Ionicons name="location-outline" size={20} color="#3B82F6" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bannerTitle}>Enable Location Access</Text>
+              <Text style={styles.bannerDesc}>
+                Allow Smart Agriculture to use your location for personalised farm insights.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#3B82F6" />
+          </Pressable>
+        )}
 
         {/* Settings Section */}
         <SectionHeader title={t('profile.settingsTitle')} />
@@ -298,7 +394,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#111827' },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: '#111827' },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -322,8 +418,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   userInfo: { flex: 1 },
-  userName: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  userLocation: { fontSize: 14, color: '#6B7280', marginTop: 2 },
+  userName: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  userLocation: { fontSize: 13, color: '#6B7280' },
+  locationResolving: { fontSize: 13, color: '#10B981', marginLeft: 6 },
+  grantLocationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  grantLocationText: { fontSize: 12, color: '#3B82F6', fontWeight: '600' },
+  locationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  bannerTitle: { fontSize: 14, fontWeight: '700', color: '#1D4ED8' },
+  bannerDesc: { fontSize: 12, color: '#3B82F6', marginTop: 2, lineHeight: 16 },
   faqContainer: {
     backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
@@ -354,7 +481,13 @@ const styles = StyleSheet.create({
 
 const sectionStyles = StyleSheet.create({
   container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 },
-  text: { fontSize: 12, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8 },
+  text: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
 });
 
 const rowStyles = StyleSheet.create({
@@ -389,5 +522,11 @@ const faqStyles = StyleSheet.create({
     padding: 16,
   },
   questionText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#111827' },
-  answer: { paddingHorizontal: 16, paddingBottom: 16, fontSize: 14, color: '#6B7280', lineHeight: 22 },
+  answer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 22,
+  },
 });

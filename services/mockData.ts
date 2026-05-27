@@ -96,7 +96,7 @@ export const generateNearbyFarms = (
     const humidity = Math.round(randomInRange(40, 80));
     const cropHealth = generateCropHealth(soilMoisture, temperature);
 
-    const cropTypes = ['Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Vegetables', 'Fruits'];
+    const cropTypes = ['Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Tomato', 'Millets', 'Vegetables'];
     
     farms.push({
       id: `farm_${i + 1}`,
@@ -126,25 +126,27 @@ export const generateInsights = (
   const insights: Insight[] = [];
   let idCounter = 1;
 
+  if (farms.length === 0) {
+    return insights;
+  }
+
   // Analyze overall farm conditions
   const avgMoisture = farms.reduce((sum, f) => sum + f.soilMoisture, 0) / farms.length;
   const avgTemp = farms.reduce((sum, f) => sum + f.temperature, 0) / farms.length;
-  const poorHealthCount = farms.filter(f => f.cropHealth === 'poor').length;
 
-  // Temperature-based insights
+  // Temperature-based general alert
   if (avgTemp > 30) {
     insights.push({
       id: `insight_${idCounter++}`,
       type: 'irrigation_recommendation',
       title: 'High Temperature Alert',
-      description: `Average temperature is ${avgTemp.toFixed(1)}°C, which is above optimal range.`,
+      description: `Average temperature across your farms is ${avgTemp.toFixed(1)}°C, above optimal range.`,
       recommendation: 'Increase irrigation frequency by 20-30%. Consider shade nets for sensitive crops.',
       severity: avgTemp > 35 ? 'high' : 'medium',
       createdAt: new Date(),
       region,
     });
   }
-
 
   // Farm-specific alerts
   farms.forEach(farm => {
@@ -153,26 +155,28 @@ export const generateInsights = (
       insights.push({
         id: `insight_${idCounter++}_${farm.id}`,
         type: 'irrigation_recommendation',
-        title: `Low Moisture at ${farm.name}`,
-        description: `${farm.name} is showing ${farm.soilMoisture}% soil moisture, which is below optimal levels.`,
-        recommendation: `Immediate irrigation recommended for ${farm.name}. Check irrigation system for leaks.`,
+        title: `Low Moisture — ${farm.name}`,
+        description: `${farm.name} is at ${farm.soilMoisture}% soil moisture (optimal: 50-70%). Crops risk wilting.`,
+        recommendation: `Immediately irrigate ${farm.name}. Check drip lines for blockages. Apply mulch to reduce evaporation.`,
         severity: farm.soilMoisture < 35 ? 'critical' : 'high',
         createdAt: new Date(),
         region,
+        farmId: farm.id,
       });
     }
 
-    // High temperature alert
-    if (farm.temperature > 32) {
+    // High temperature alert per farm
+    if (farm.temperature > 33) {
       insights.push({
         id: `insight_${idCounter++}_${farm.id}`,
         type: 'weather_forecast',
-        title: `Heat Stress at ${farm.name}`,
-        description: `Temperature at ${farm.name} is ${farm.temperature}°C, causing potential heat stress.`,
-        recommendation: `Increase irrigation frequency. Consider shade nets if possible.`,
-        severity: farm.temperature > 35 ? 'critical' : 'medium',
+        title: `Heat Stress — ${farm.name}`,
+        description: `${farm.name} is recording ${farm.temperature}°C. ${farm.cropType ? `${farm.cropType} crop` : 'Crop'} may suffer heat stress above 32°C.`,
+        recommendation: `Irrigate ${farm.name} in early morning or evening to reduce heat stress. Avoid overhead irrigation.`,
+        severity: farm.temperature > 36 ? 'critical' : 'medium',
         createdAt: new Date(),
         region,
+        farmId: farm.id,
       });
     }
 
@@ -181,40 +185,162 @@ export const generateInsights = (
       insights.push({
         id: `insight_${idCounter++}_${farm.id}`,
         type: 'fertilizer_recommendation',
-        title: `Health Warning: ${farm.name}`,
-        description: `${farm.name} is showing poor crop health. This may indicate nutrient deficiency.`,
-        recommendation: `Conduct soil testing. Apply NPK fertilizer (19:19:19) at 200kg/hectare.`,
+        title: `Nutrient Deficiency — ${farm.name}`,
+        description: `${farm.name} shows poor crop health likely due to nutrient deficiency or pest damage.`,
+        recommendation: `Conduct soil testing at ${farm.name}. Apply NPK fertilizer (19:19:19) at 200 kg/ha. Inspect for pest damage.`,
         severity: 'high',
         createdAt: new Date(),
         region,
+        farmId: farm.id,
       });
+    }
+
+    // High humidity + warmth = pest risk
+    if ((farm.humidity ?? 60) > 70 && farm.temperature > 26) {
+      insights.push({
+        id: `insight_${idCounter++}_${farm.id}`,
+        type: 'pest_control',
+        title: `Pest Risk — ${farm.name}`,
+        description: `High humidity (${farm.humidity ?? '~70'}%) and warmth at ${farm.name} create ideal fungal and pest conditions.`,
+        recommendation: `Scout ${farm.name} for aphids, stem borers, and powdery mildew. Apply neem oil or copper fungicide preventively.`,
+        severity: 'medium',
+        createdAt: new Date(),
+        region,
+        farmId: farm.id,
+      });
+    }
+
+    // Crop suggestion based on current type and season
+    if (farm.cropType) {
+      const month = new Date().getMonth();
+      const isMonsoon = month >= 5 && month <= 9;
+      if (isMonsoon) {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Monsoon Crop Tip — ${farm.name}`,
+          description: `${farm.name} (currently: ${farm.cropType}) is in monsoon season. Optimal time for water-intensive crops.`,
+          recommendation: `Consider rice, maize, or sugarcane as companion or next crop at ${farm.name}. Ensure proper field drainage.`,
+          severity: 'low',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      }
+
+      // Crop-specific tailored insights
+      const typeLower = farm.cropType.toLowerCase();
+      if (typeLower === 'rice') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Water Retention — ${farm.name}`,
+          description: `Rice requires constant soil saturation. Current moisture is ${farm.soilMoisture}%.`,
+          recommendation: `Maintain 3-5cm standing water. Check bunds for leakages to prevent water loss and ensure optimal flooding.`,
+          severity: farm.soilMoisture < 60 ? 'high' : 'low',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      } else if (typeLower === 'wheat') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Heat Stress & Timing — ${farm.name}`,
+          description: `Wheat is sensitive to terminal heat stress above 30°C.`,
+          recommendation: `Apply light irrigation during grain filling stage to cool the micro-climate. Avoid waterlogging.`,
+          severity: farm.temperature > 30 ? 'medium' : 'low',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      } else if (typeLower === 'tomato') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Fungal & Pest Monitoring — ${farm.name}`,
+          description: `Tomatoes are highly susceptible to early blight and fruit borers.`,
+          recommendation: `Apply prophylactic fungicides if humidity exceeds 70%. Use pheromone traps for fruit borer monitoring.`,
+          severity: (farm.humidity && farm.humidity > 70) ? 'high' : 'medium',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      } else if (typeLower === 'sugarcane') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Nutrient & Moisture Mgmt — ${farm.name}`,
+          description: `Sugarcane has high nutrient and moisture demands during the grand growth phase.`,
+          recommendation: `Ensure adequate nitrogen top-dressing and maintain soil moisture above 65%. Earthing up is recommended.`,
+          severity: farm.soilMoisture < 65 ? 'medium' : 'low',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      } else if (typeLower === 'millets') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Drought Handling — ${farm.name}`,
+          description: `Millets are drought-tolerant but prolonged dry spells can reduce yield.`,
+          recommendation: `Perform inter-cultivation to create soil mulch. Provide life-saving irrigation if available during flowering.`,
+          severity: 'low',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      } else if (typeLower === 'cotton') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Bollworm & Moisture Mgmt — ${farm.name}`,
+          description: `Cotton is vulnerable to bollworms and water-logging.`,
+          recommendation: `Ensure proper drainage to prevent root rot. Install pheromone traps for pink bollworm monitoring.`,
+          severity: farm.soilMoisture > 70 ? 'high' : 'medium',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      } else if (typeLower === 'vegetables') {
+        insights.push({
+          id: `insight_${idCounter++}_${farm.id}`,
+          type: 'crop_suggestion',
+          title: `Harvest & Nutrient Tip — ${farm.name}`,
+          description: `Vegetables require frequent harvesting and balanced nutrition.`,
+          recommendation: `Apply foliar micronutrient spray. Harvest mature produce in the morning to maintain freshness.`,
+          severity: 'low',
+          createdAt: new Date(),
+          region,
+          farmId: farm.id,
+        });
+      }
     }
   });
 
-  // Seasonal recommendations (General)
+  // Seasonal general recommendation
   const month = new Date().getMonth();
-  
-  if (month >= 5 && month <= 9) { // Monsoon season (June-October)
+  if (month >= 5 && month <= 9) {
     insights.push({
       id: `insight_${idCounter++}`,
       type: 'crop_suggestion',
-      title: 'Monsoon Season Crop Suggestions',
-      description: 'Optimal time for monsoon crops in your region.',
-      recommendation: 'Consider planting: Rice (primary), Cotton, Maize, or Groundnut. Ensure proper drainage.',
+      title: 'Monsoon Season Opportunity',
+      description: 'It is the optimal monsoon planting window for your region.',
+      recommendation: 'Primary crops to consider: Rice, Cotton, Maize, Groundnut. Ensure field drainage and bund repair before heavy rains.',
       severity: 'low',
       createdAt: new Date(),
       region,
     });
   }
 
-  // Weather-based pest alert (General)
+  // General pest alert
   if (avgTemp > 28 && avgMoisture > 60) {
     insights.push({
       id: `insight_${idCounter++}`,
       type: 'pest_control',
-      title: 'Pest Activity Alert',
-      description: 'High temperature and humidity create favorable conditions for pests across farms.',
-      recommendation: 'Monitor for common pests: stem borer, aphids. Use neem-based pesticides preventively.',
+      title: 'Favorable Pest Conditions Across Farms',
+      description: 'High temperature and humidity across farms create widespread pest activity risk.',
+      recommendation: 'Monitor all fields for stem borer, aphids, and whitefly. Use neem-based pesticides preventively.',
       severity: 'medium',
       createdAt: new Date(),
       region,

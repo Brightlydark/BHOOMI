@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { Farm } from '../../types/farm';
 import { Sprout } from 'lucide-react-native';
-import { MotiView } from 'moti';
 
 interface FarmMarkerProps {
   farm: Farm;
@@ -16,16 +15,32 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
   isSelected,
   onPress,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: isSelected ? 1.15 : 1,
+        useNativeDriver: true,
+        friction: 6,
+        tension: 100,
+      }),
+      Animated.spring(translateY, {
+        toValue: isSelected ? -8 : 0,
+        useNativeDriver: true,
+        friction: 6,
+        tension: 100,
+      }),
+    ]).start();
+  }, [isSelected]);
+
   const getHealthColor = (health: Farm['cropHealth']) => {
     switch (health) {
-      case 'good':
-        return '#10B981';
-      case 'moderate':
-        return '#F59E0B';
-      case 'poor':
-        return '#EF4444';
-      default:
-        return '#6B7280';
+      case 'good': return '#10B981';
+      case 'moderate': return '#F59E0B';
+      case 'poor': return '#EF4444';
+      default: return '#6B7280';
     }
   };
 
@@ -34,35 +49,42 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
   return (
     <Marker
       coordinate={farm.location}
-      onPress={(e) => {
-        e.stopPropagation();
-        onPress(farm);
-      }}
-      style={{ zIndex: isSelected ? 10 : 1 }}
+      onPress={() => onPress(farm)}
+      tracksViewChanges={false}
       anchor={{ x: 0.5, y: 1 }}
     >
-      <MotiView
-        animate={{
-          scale: isSelected ? 1.15 : 1,
-          translateY: isSelected ? -8 : 0,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 250,
-          damping: 20,
-        }}
-        style={styles.markerWrapper}
+      <Animated.View
+        style={[
+          styles.markerWrapper,
+          { transform: [{ scale: scaleAnim }, { translateY }] },
+        ]}
       >
-        <View style={[styles.pill, { backgroundColor: isSelected ? '#111827' : '#FFFFFF', borderColor: isSelected ? '#111827' : healthColor }]}>
-          <View style={[styles.iconContainer, { backgroundColor: healthColor + '20' }]}>
-            <Sprout size={14} color={healthColor} />
+        <View
+          style={[
+            styles.pill,
+            {
+              backgroundColor: isSelected ? '#111827' : '#FFFFFF',
+              borderColor: isSelected ? '#111827' : healthColor,
+            },
+          ]}
+        >
+          <View style={[styles.iconContainer, { backgroundColor: healthColor + '25' }]}>
+            <Sprout size={13} color={isSelected ? '#FFFFFF' : healthColor} />
           </View>
-          <Text style={[styles.label, { color: isSelected ? '#FFFFFF' : '#111827' }]}>
-            {farm.name}
+          <Text
+            style={[styles.label, { color: isSelected ? '#FFFFFF' : '#111827' }]}
+            numberOfLines={1}
+          >
+            {farm.name.length > 14 ? farm.name.substring(0, 14) + '…' : farm.name}
           </Text>
         </View>
-        <View style={[styles.triangle, { borderTopColor: isSelected ? '#111827' : healthColor }]} />
-      </MotiView>
+        <View
+          style={[
+            styles.triangle,
+            { borderTopColor: isSelected ? '#111827' : healthColor },
+          ]}
+        />
+      </Animated.View>
     </Marker>
   );
 };
@@ -70,21 +92,20 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
 const styles = StyleSheet.create({
   markerWrapper: {
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 2, // Space for triangle
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 8,
     borderRadius: 20,
     borderWidth: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 5,
     elevation: 6,
+    maxWidth: 150,
   },
   iconContainer: {
     width: 20,
@@ -92,10 +113,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
+    marginRight: 5,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   triangle: {
@@ -103,10 +124,9 @@ const styles = StyleSheet.create({
     height: 0,
     backgroundColor: 'transparent',
     borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 0,
-    borderTopWidth: 8,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 7,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     marginTop: -1,

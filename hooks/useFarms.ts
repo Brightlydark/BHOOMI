@@ -23,6 +23,9 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
   /**
    * Fetch farms from service (API → cache → mock)
    */
+  const lat = userLocation?.latitude ?? null;
+  const lon = userLocation?.longitude ?? null;
+
   const loadFarms = useCallback(async () => {
     if (!userLocation) return;
 
@@ -38,7 +41,8 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
     } finally {
       setLoading(false);
     }
-  }, [userLocation, setFarms]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lat, lon, setFarms]);
 
   /**
    * Filter farms locally by search query
@@ -79,12 +83,11 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
     }
   }, [userLocation, setFarms]);
 
-  // Load farms when user location is available
   useEffect(() => {
-    if (userLocation) {
+    if (lat !== null && lon !== null) {
       loadFarms();
     }
-  }, [userLocation?.latitude, userLocation?.longitude]);
+  }, [lat, lon, loadFarms]);
 
   return {
     farms: displayedFarms,

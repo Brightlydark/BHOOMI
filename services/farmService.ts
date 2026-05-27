@@ -10,8 +10,8 @@ import {
   calculateDistance 
 } from './mockData';
 
-const FARMS_CACHE_KEY = '@smart_agriculture_farms_cache';
-const INSIGHTS_CACHE_KEY = '@smart_agriculture_insights_cache';
+const FARMS_CACHE_KEY = '@smart_agriculture_farms_cache_v2';
+const INSIGHTS_CACHE_KEY = '@smart_agriculture_insights_cache_v2';
 const CACHE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 
 interface CachedData<T> {
@@ -131,11 +131,13 @@ export const fetchNearbyFarms = async (
   } catch (error) {
     // API unavailable, falling back to mock farms data
     
-    // Fallback to cached data
-    const cachedFarms = await getFarmsFromCache();
-    if (cachedFarms) {
-      console.log('Using stale cached farms data');
-      return cachedFarms;
+    // Fallback to cached data only if cache is allowed or as a desperate measure
+    if (useCache) {
+      const cachedFarms = await getFarmsFromCache();
+      if (cachedFarms) {
+        console.log('Using stale cached farms data');
+        return cachedFarms;
+      }
     }
 
     // Last resort: generate mock data
@@ -174,11 +176,13 @@ export const fetchInsights = async (
   } catch (error) {
     // API unavailable, falling back to mock insights data
     
-    // Fallback to cached data
-    const cachedInsights = await getInsightsFromCache();
-    if (cachedInsights) {
-      console.log('Using stale cached insights data');
-      return cachedInsights;
+    // Fallback to cached data only if cache is allowed or as a desperate measure
+    if (useCache) {
+      const cachedInsights = await getInsightsFromCache();
+      if (cachedInsights) {
+        console.log('Using stale cached insights data');
+        return cachedInsights;
+      }
     }
 
     // Last resort: generate mock insights

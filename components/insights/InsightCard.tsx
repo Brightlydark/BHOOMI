@@ -98,14 +98,14 @@ export const InsightCard: React.FC<InsightCardProps> = ({ insight, onPress, comp
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 1,
-    padding: 16,
-    borderRadius: 16,
+    padding: 20,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 2,
   },
   cardCompact: {
@@ -153,20 +153,20 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: '#4B5563',
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: 22,
+    marginBottom: 16,
   },
   recommendationContainer: {
     backgroundColor: '#FFFBEB',
-    padding: 12,
-    borderRadius: 10,
-    borderLeftWidth: 3,
+    padding: 14,
+    borderRadius: 12,
+    borderLeftWidth: 4,
     borderLeftColor: '#F59E0B',
   },
   recommendationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   recommendationLabel: {
     fontSize: 12,
@@ -175,9 +175,9 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   recommendation: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#92400E',
-    lineHeight: 18,
+    lineHeight: 22,
   },
   actionRow: {
     flexDirection: 'row',
