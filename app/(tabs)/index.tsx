@@ -20,7 +20,24 @@ import { useFarms } from '../../hooks/useFarms';
 import { useInsights } from '../../hooks/useInsights';
 import { useUserStore } from '../../store/userStore';
 import { CropHealthStatus } from '../../types/farm';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+
+import { 
+  generateMoistureTrends, 
+  generateTemperatureTrends, 
+  generateIrrigationTimeline, 
+  generateSoilHealthData, 
+  generateFarmComparison,
+  generateAIPrediction
+} from '../../services/analyticsService';
+import { 
+  MoistureChart, 
+  TemperatureChart, 
+  IrrigationTimeline, 
+  SoilHealthChart, 
+  FarmComparisonChart 
+} from '../../components/analytics/AnalyticsCharts';
+import { AIPredictionCard } from '../../components/analytics/AIPredictionCard';
 
 // Health status styling
 const healthColors: Record<CropHealthStatus, { bg: string; text: string; icon: string }> = {
@@ -33,9 +50,10 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { user } = useUserStore();
   const { location } = useLocation();
-  const { farms, loading: farmsLoading, refreshFarms } = useFarms(location);
+  const { farms, loading: farmsLoading, refreshFarms, selectedFarm, selectFarm } = useFarms(location);
   const { insights, loading: insightsLoading, criticalCount } = useInsights(farms);
   const [refreshing, setRefreshing] = useState(false);
+  const [timeframe, setTimeframe] = useState<7 | 30 | 90>(7);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -43,19 +61,30 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  // Filter farms for stats based on selection
+  const displayFarms = selectedFarm ? [selectedFarm] : farms;
+
   // Compute aggregated farm stats
   const avgMoisture =
-    farms.length > 0
-      ? Math.round(farms.reduce((s, f) => s + f.soilMoisture, 0) / farms.length)
+    displayFarms.length > 0
+      ? Math.round(displayFarms.reduce((s, f) => s + f.soilMoisture, 0) / displayFarms.length)
       : 0;
   const avgTemp =
-    farms.length > 0
-      ? Math.round((farms.reduce((s, f) => s + f.temperature, 0) / farms.length) * 10) / 10
+    displayFarms.length > 0
+      ? Math.round((displayFarms.reduce((s, f) => s + f.temperature, 0) / displayFarms.length) * 10) / 10
       : 0;
-  const healthCounts = farms.reduce(
+  const healthCounts = displayFarms.reduce(
     (acc, f) => ({ ...acc, [f.cropHealth]: (acc[f.cropHealth] ?? 0) + 1 }),
     {} as Record<CropHealthStatus, number>
   );
+
+  // Generate Chart Data
+  const moistureInfo = useMemo(() => generateMoistureTrends(avgMoisture, timeframe), [avgMoisture, timeframe]);
+  const tempInfo = useMemo(() => generateTemperatureTrends(avgTemp, timeframe), [avgTemp, timeframe]);
+  const irrigationData = useMemo(() => generateIrrigationTimeline(timeframe), [selectedFarm, timeframe]);
+  const soilData = useMemo(() => selectedFarm ? generateSoilHealthData(selectedFarm.id) : [], [selectedFarm]);
+  const comparisonInfo = useMemo(() => !selectedFarm ? generateFarmComparison(farms) : { data: [] }, [farms, selectedFarm]);
+  const aiPrediction = useMemo(() => generateAIPrediction(selectedFarm), [selectedFarm, avgMoisture, avgTemp]);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -99,6 +128,39 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
+        {/* Farm Selector */}
+        {!isLoading && farms.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.farmSelectorScroll}
+            contentContainerStyle={styles.farmSelectorContainer}
+          >
+            <Pressable
+              style={[styles.farmTab, !selectedFarm && styles.farmTabActive]}
+              onPress={() => selectFarm(null)}
+            >
+              <Text style={[styles.farmTabText, !selectedFarm && styles.farmTabTextActive]}>
+                All Farms
+              </Text>
+            </Pressable>
+            {farms.map((farm) => (
+              <Pressable
+                key={farm.id}
+                style={[styles.farmTab, selectedFarm?.id === farm.id && styles.farmTabActive]}
+                onPress={() => selectFarm(farm)}
+              >
+                <Text 
+                  style={[styles.farmTabText, selectedFarm?.id === farm.id && styles.farmTabTextActive]}
+                  numberOfLines={1}
+                >
+                  {farm.name}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+
         {/* Quick Stats Banner */}
         {isLoading ? (
           <View style={styles.sectionPad}>
@@ -109,8 +171,8 @@ export default function HomeScreen() {
             <StatPill
               icon="business"
               iconColor="#3B82F6"
-              label={t('home.statFarms')}
-              value={String(farms.length)}
+              label={selectedFarm ? "Active Field" : t('home.statFarms')}
+              value={String(displayFarms.length)}
             />
             <View style={styles.statDivider} />
             <StatPill
@@ -156,6 +218,50 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        {/* Analytics Section */}
+        {!isLoading && (
+          <View style={styles.section}>
+            <SectionTitle title="Analytics & Trends" />
+            
+            <View style={styles.timeframeContainer}>
+              {([7, 30, 90] as const).map((days) => (
+                <Pressable
+                  key={days}
+                  style={[styles.timeframeBtn, timeframe === days && styles.timeframeBtnActive]}
+                  onPress={() => setTimeframe(days)}
+                >
+                  <Text style={[styles.timeframeText, timeframe === days && styles.timeframeTextActive]}>
+                    {days}D
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <AIPredictionCard prediction={aiPrediction} />
+            
+            {/* Scrollable Horizontal Charts or Stacked? Stacked is better for readability */}
+            <MoistureChart 
+              data={moistureInfo.data} 
+              trendValue={moistureInfo.trendValue}
+              trendDirection={moistureInfo.trendDirection} 
+            />
+            <TemperatureChart 
+              data={tempInfo.data} 
+              trendValue={tempInfo.trendValue}
+              trendDirection={tempInfo.trendDirection}
+            />
+            
+            {selectedFarm ? (
+              <>
+                <IrrigationTimeline data={irrigationData} />
+                <SoilHealthChart data={soilData} />
+              </>
+            ) : (
+              <FarmComparisonChart data={comparisonInfo.data} />
+            )}
+          </View>
+        )}
 
         {/* Recent Insights */}
         <View style={styles.section}>
@@ -299,6 +405,42 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   notifDotText: { fontSize: 10, fontWeight: '700', color: '#FFFFFF' },
+  farmSelectorScroll: {
+    backgroundColor: '#F9FAFB',
+    maxHeight: 56,
+  },
+  farmSelectorContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+    flexDirection: 'row',
+  },
+  farmTab: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    maxWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  farmTabActive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#10B981',
+  },
+  farmTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  farmTabTextActive: {
+    color: '#059669',
+  },
   statsBanner: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -306,11 +448,41 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
     padding: 16,
+    shadowColor: '#8C92AC',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  timeframeContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 16,
+    padding: 4,
+    marginHorizontal: 16,
+    marginBottom: 20,
+  },
+  timeframeBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  timeframeBtnActive: {
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.07,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  timeframeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  timeframeTextActive: {
+    color: '#111827',
   },
   statDivider: { width: 1, backgroundColor: '#E5E7EB', marginVertical: 4 },
   sectionPad: { paddingHorizontal: 16, paddingTop: 16 },
