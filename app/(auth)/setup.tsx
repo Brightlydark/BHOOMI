@@ -10,6 +10,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ export default function SetupScreen() {
   const completeSetup = useUserStore((s) => s.completeSetup);
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
 
   const btnScale = useRef(new Animated.Value(1)).current;
   const onPressIn = () =>
@@ -78,10 +80,10 @@ export default function SetupScreen() {
           transition={{ type: 'timing', duration: 600, delay: 250 }}
           style={styles.textBlock}
         >
-          <Text style={styles.title}>What's your name?</Text>
+          <Text style={styles.title}>{t('setup.whatsYourName', "What's your name?")}</Text>
           <Text style={styles.subtitle}>
-            Let's personalise your{'\n'}
-            <Text style={styles.bhoomi}>BHOOMI</Text> experience
+            {t('setup.personalise', "Let's personalise your")}{'\n'}
+            <Text style={styles.bhoomi}>BHOOMI</Text>{t('setup.experience', " experience")}
           </Text>
         </MotiView>
 
@@ -92,7 +94,7 @@ export default function SetupScreen() {
           transition={{ type: 'timing', duration: 600, delay: 400 }}
           style={styles.formBlock}
         >
-          <Text style={styles.label}>Full Name</Text>
+          <Text style={styles.label}>{t('setup.fullName', 'Full Name')}</Text>
           <View style={[styles.inputWrapper, focused && styles.inputWrapperFocused]}>
             <Ionicons
               name="person-outline"
@@ -102,7 +104,7 @@ export default function SetupScreen() {
             />
             <TextInput
               style={styles.input}
-              placeholder="E.g. Ramesh Kumar"
+              placeholder={t('setup.namePlaceholder', 'E.g. Ramesh Kumar')}
               placeholderTextColor={colors.textMuted}
               value={name}
               onChangeText={setName}
@@ -131,7 +133,7 @@ export default function SetupScreen() {
                 style={styles.btnGradient}
               >
                 <Text style={[styles.btnText, !canSubmit && styles.btnTextDisabled]}>
-                  Start Farming
+                  {t('setup.startFarming', 'Start Farming')}
                 </Text>
                 {canSubmit && (
                   <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
@@ -141,7 +143,7 @@ export default function SetupScreen() {
           </Animated.View>
 
           <Text style={styles.hint}>
-            Your name will appear on your BHOOMI dashboard
+            {t('setup.hint', 'Your name will appear on your BHOOMI dashboard')}
           </Text>
         </MotiView>
       </KeyboardAvoidingView>

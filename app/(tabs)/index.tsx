@@ -7,6 +7,7 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +22,7 @@ import { useInsights } from '../../hooks/useInsights';
 import { useWeather } from '../../hooks/useWeather';
 import { useUserStore } from '../../store/userStore';
 import { CropHealthStatus } from '../../types/farm';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { calculateFarmHealthScore } from '../../services/analyticsService';
 import { HealthScoreCard } from '../../components/analytics/HealthScoreCard';
 import { useAppTheme } from '../../theme/useAppTheme';
@@ -96,8 +97,8 @@ export default function HomeScreen() {
   const moistureInfo = useMemo(() => generateMoistureTrends(avgMoisture, timeframe), [avgMoisture, timeframe]);
   const tempInfo = useMemo(() => generateTemperatureTrends(avgTemp, timeframe), [avgTemp, timeframe]);
   const irrigationData = useMemo(() => generateIrrigationTimeline(timeframe), [selectedFarm, timeframe]);
-  const soilData = useMemo(() => selectedFarm ? generateSoilHealthData(selectedFarm.id) : [], [selectedFarm]);
-  const comparisonInfo = useMemo(() => !selectedFarm ? generateFarmComparison(farms) : { data: [] }, [farms, selectedFarm]);
+  const soilData = useMemo(() => selectedFarm ? generateSoilHealthData(selectedFarm.id, timeframe) : [], [selectedFarm, timeframe]);
+  const comparisonInfo = useMemo(() => !selectedFarm ? generateFarmComparison(farms, timeframe) : { data: [] }, [farms, selectedFarm, timeframe]);
   const aiPrediction = useMemo(() => generateAIPrediction(selectedFarm, weather, t), [selectedFarm, weather, t]);
   const farmHealthData = useMemo(() => calculateFarmHealthScore(displayFarms, selectedFarm, weather, t), [displayFarms, selectedFarm, weather, t]);
 
@@ -107,6 +108,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -352,13 +354,22 @@ interface QuickActionProps {
 function QuickActionCard({ icon, iconColor, label, onPress }: QuickActionProps) {
   const { colors } = useAppTheme();
   const actionStyles = useMemo(() => createActionStyles(colors), [colors]);
+  const scale = useRef(new Animated.Value(1)).current;
+
   return (
-    <Pressable style={actionStyles.card} onPress={onPress}>
-      <View style={[actionStyles.iconBg, { backgroundColor: `${iconColor}15` }]}>
-        <Ionicons name={icon as any} size={24} color={iconColor} />
-      </View>
-      <Text style={actionStyles.label}>{label}</Text>
-    </Pressable>
+    <Animated.View style={[{ transform: [{ scale }] }]}>
+      <Pressable 
+        style={actionStyles.card} 
+        onPress={onPress}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true }).start()}
+        onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
+      >
+        <View style={[actionStyles.iconBg, { backgroundColor: `${iconColor}15` }]}>
+          <Ionicons name={icon as any} size={24} color={iconColor} />
+        </View>
+        <Text style={actionStyles.label}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 

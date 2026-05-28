@@ -13,7 +13,7 @@ interface AIPredictionCardProps {
   prediction: AIPrediction;
 }
 
-export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }) => {
+export const AIPredictionCard: React.FC<AIPredictionCardProps> = React.memo(({ prediction }) => {
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const { t } = useTranslation();
@@ -74,7 +74,7 @@ export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }
       </LinearGradient>
     </View>
   );
-};
+});
 
 // ── Styles ─────────────────────────────────────────────────────
 const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({

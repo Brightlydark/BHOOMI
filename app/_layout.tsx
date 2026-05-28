@@ -71,7 +71,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

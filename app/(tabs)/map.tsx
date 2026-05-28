@@ -96,7 +96,7 @@ export default function MapScreen() {
     await requestPermission();
   };
 
-  const handleMarkerPress = (farm: Farm) => {
+  const handleMarkerPress = useCallback((farm: Farm) => {
     selectFarm(farm);
     // snapToIndex is now handled by the useEffect above
 
@@ -111,12 +111,12 @@ export default function MapScreen() {
         500
       );
     }
-  };
+  }, [selectFarm]);
 
-  const handleMapPress = () => {
+  const handleMapPress = useCallback(() => {
     Keyboard.dismiss();
     bottomSheetRef.current?.close();
-  };
+  }, []);
 
   const handleSheetChanges = useCallback(
     (index: number) => {
@@ -147,6 +147,16 @@ export default function MapScreen() {
       });
     }
   };
+
+  const handleRegionChangeComplete = useCallback(async (region: any) => {
+    if (isPlacingMode) {
+      setPlacementCoord({ latitude: region.latitude, longitude: region.longitude });
+      setValidating(true);
+      const res = await validateFarmLocation(region.latitude, region.longitude);
+      setValidationResult(res);
+      setValidating(false);
+    }
+  }, [isPlacingMode]);
 
   /** After a farm is added, zoom to its pin */
   const handleFarmAdded = useCallback(
@@ -251,15 +261,7 @@ export default function MapScreen() {
             farms={farms}
             selectedFarm={selectedFarm}
             onMarkerPress={handleMarkerPress}
-            onRegionChangeComplete={async (region) => {
-              if (isPlacingMode) {
-                setPlacementCoord({ latitude: region.latitude, longitude: region.longitude });
-                setValidating(true);
-                const res = await validateFarmLocation(region.latitude, region.longitude);
-                setValidationResult(res);
-                setValidating(false);
-              }
-            }}
+            onRegionChangeComplete={handleRegionChangeComplete}
           />
         ) : (
           <EmptyState

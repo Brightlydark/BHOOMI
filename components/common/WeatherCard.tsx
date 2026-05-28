@@ -27,7 +27,7 @@ const IconMap: Record<string, any> = {
   'CloudLightning': CloudLightning,
 };
 
-export const WeatherCard = ({ lat, lon, title, compact = false }: WeatherCardProps) => {
+export const WeatherCard = React.memo(({ lat, lon, title, compact = false }: WeatherCardProps) => {
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const { t } = useTranslation();
@@ -101,7 +101,7 @@ export const WeatherCard = ({ lat, lon, title, compact = false }: WeatherCardPro
       )}
     </View>
   );
-};
+});
 
 const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: {

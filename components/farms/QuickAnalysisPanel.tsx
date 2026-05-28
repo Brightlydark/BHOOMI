@@ -38,8 +38,8 @@ export const QuickAnalysisPanel: React.FC<QuickAnalysisPanelProps> = ({ farm, on
   const aiMessage = topInsight 
     ? topInsight.title 
     : farm.cropHealth === 'good' 
-      ? "Moisture and temperature are optimal. No immediate action required." 
-      : "Monitoring conditions. Adjust irrigation schedule if needed.";
+      ? t('map.quickAiGood', "Moisture and temperature are optimal. No immediate action required.")
+      : t('map.quickAiMonitor', "Monitoring conditions. Adjust irrigation schedule if needed.");
 
   return (
     <View style={styles.container}>
@@ -62,7 +62,7 @@ export const QuickAnalysisPanel: React.FC<QuickAnalysisPanelProps> = ({ farm, on
       {/* Quick Metrics */}
       <View style={styles.metricsGrid}>
         <View style={styles.metricItem}>
-          <View style={[styles.metricIconBg, { backgroundColor: isDark ? `${colors.info}20` : '#EFF6FF' }]}>
+          <View style={[styles.metricIconBg, { backgroundColor: isDark ? `${colors.info}20` : `${colors.info}10` }]}>
             <Ionicons name="water" size={20} color={colors.info} />
           </View>
           <View style={styles.metricTextWrap}>
@@ -74,7 +74,7 @@ export const QuickAnalysisPanel: React.FC<QuickAnalysisPanelProps> = ({ farm, on
         <View style={styles.metricDivider} />
         
         <View style={styles.metricItem}>
-          <View style={[styles.metricIconBg, { backgroundColor: isDark ? `${colors.danger}20` : '#FEF2F2' }]}>
+          <View style={[styles.metricIconBg, { backgroundColor: isDark ? `${colors.danger}20` : `${colors.danger}10` }]}>
             <Ionicons name="thermometer" size={20} color={colors.danger} />
           </View>
           <View style={styles.metricTextWrap}>
@@ -86,12 +86,12 @@ export const QuickAnalysisPanel: React.FC<QuickAnalysisPanelProps> = ({ farm, on
         <View style={styles.metricDivider} />
         
         <View style={styles.metricItem}>
-          <View style={[styles.metricIconBg, { backgroundColor: isDark ? `${colors.success}20` : '#F0FDF4' }]}>
+          <View style={[styles.metricIconBg, { backgroundColor: isDark ? `${colors.success}20` : `${colors.success}10` }]}>
             <Ionicons name="partly-sunny" size={20} color={colors.success} />
           </View>
           <View style={styles.metricTextWrap}>
             <Text style={styles.metricValue} numberOfLines={1} adjustsFontSizeToFit>{farm.humidity}%</Text>
-            <Text style={styles.metricLabel} numberOfLines={1}>Humidity</Text>
+            <Text style={styles.metricLabel} numberOfLines={1}>{t('map.humidity', 'Humidity')}</Text>
           </View>
         </View>
       </View>
@@ -101,7 +101,7 @@ export const QuickAnalysisPanel: React.FC<QuickAnalysisPanelProps> = ({ farm, on
         <View style={styles.aiBoxHeader}>
           <View style={styles.aiTitleRow}>
             <Ionicons name="sparkles" size={16} color={colors.primary} />
-            <Text style={styles.aiBoxTitle}>Quick Analysis</Text>
+            <Text style={styles.aiBoxTitle}>{t('map.quickAnalysis', 'Quick Analysis')}</Text>
           </View>
           {topInsight && (
             <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(topInsight.severity) + '15' }]}>
@@ -116,7 +116,7 @@ export const QuickAnalysisPanel: React.FC<QuickAnalysisPanelProps> = ({ farm, on
 
       {/* Action Button */}
       <Pressable style={styles.detailsButton} onPress={onViewDetails}>
-        <Text style={styles.detailsButtonText}>Detailed Insights</Text>
+        <Text style={styles.detailsButtonText}>{t('map.detailedInsights', 'Detailed Insights')}</Text>
         <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
       </Pressable>
     </View>
@@ -211,7 +211,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
     marginHorizontal: 10,
   },
   aiBox: {
-    backgroundColor: isDark ? `${colors.primary}10` : '#F8FAFC',
+    backgroundColor: isDark ? `${colors.primary}10` : `${colors.primary}05`,
     borderWidth: 1,
     borderRadius: 16,
     padding: 16,

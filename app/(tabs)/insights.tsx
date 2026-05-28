@@ -420,7 +420,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
   },
   listContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   emptyScrollContent: {
     flexGrow: 1,

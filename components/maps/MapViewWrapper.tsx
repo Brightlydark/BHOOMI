@@ -18,7 +18,7 @@ interface MapViewWrapperProps {
   onRegionChangeComplete?: (region: Region) => void;
 }
 
-export const MapViewWrapper = forwardRef<MapView, MapViewWrapperProps>((props, ref) => {
+export const MapViewWrapper = React.memo(forwardRef<MapView, MapViewWrapperProps>((props, ref) => {
   const { farms, selectedFarm, onMarkerPress, ...rest } = props;
   
   return (
@@ -40,4 +40,4 @@ export const MapViewWrapper = forwardRef<MapView, MapViewWrapperProps>((props, r
       ))}
     </MapView>
   );
-});
+}));

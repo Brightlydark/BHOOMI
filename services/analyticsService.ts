@@ -85,9 +85,9 @@ export const generateIrrigationTimeline = (days = 7): ChartDataPoint[] => {
   });
 };
 
-export const generateSoilHealthData = (farmId: string): ChartDataPoint[] => {
-  // We simulate data based on farmId string to make it pseudo-deterministic
-  const seed = farmId.length;
+export const generateSoilHealthData = (farmId: string, days = 7): ChartDataPoint[] => {
+  // We simulate data based on farmId string and timeframe to make it pseudo-deterministic
+  const seed = farmId.length + days;
   
   return [
     { value: Math.round(randomInRange(40, 80) + seed), label: 'N', frontColor: '#10B981' },
@@ -98,15 +98,19 @@ export const generateSoilHealthData = (farmId: string): ChartDataPoint[] => {
   ];
 };
 
-export const generateFarmComparison = (farms: Farm[]) => {
+export const generateFarmComparison = (farms: Farm[], days = 7) => {
   const data = farms.map((farm) => {
-    // Productivity score based on health and moisture
+    // Productivity score based on health, moisture, and timeframe variance
     let score = 50;
     if (farm.cropHealth === 'good') score += 30;
     else if (farm.cropHealth === 'moderate') score += 10;
     else score -= 10;
 
     if (farm.soilMoisture > 50 && farm.soilMoisture < 80) score += 20;
+
+    // Simulate historical variance based on timeframe
+    const variance = (days > 7 ? (days === 30 ? -5 : -10) : 0);
+    score = score + variance;
 
     return {
       value: Math.min(100, Math.max(0, score)),
@@ -332,7 +336,7 @@ export const calculateFarmHealthScore = (farms: Farm[], selectedFarm: Farm | nul
     else if (farm.temperature > 30) score -= 5;
 
     if (weather) {
-      if (weather.rainfall > 50) score -= 10;
+      if ((weather.forecast && weather.forecast[0] && weather.forecast[0].rainfall > 50) || weather.rainfall > 5) score -= 10;
       if (weather.uvIndex && weather.uvIndex >= 8) score -= 10;
       if (weather.humidity > 85) score -= 5;
     }

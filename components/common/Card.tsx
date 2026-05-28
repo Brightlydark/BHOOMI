@@ -3,7 +3,8 @@ import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle, Pressable } from 'react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { Animated } from 'react-native';
 
 interface CardProps {
   children?: React.ReactNode;
@@ -21,19 +22,59 @@ export const Card: React.FC<CardProps> = ({
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const Component = onPress ? Pressable : View;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    if (onPress) {
+      Animated.spring(scale, {
+        toValue: 0.98,
+        useNativeDriver: true,
+        speed: 20,
+        bounciness: 4,
+      }).start();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (onPress) {
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 20,
+        bounciness: 4,
+      }).start();
+    }
+  };
+
+  if (onPress) {
+    return (
+      <Animated.View style={[{ transform: [{ scale }] }]}>
+        <Pressable
+          style={[
+            styles.card,
+            elevated && styles.elevated,
+            style,
+          ]}
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+        >
+          {children}
+        </Pressable>
+      </Animated.View>
+    );
+  }
 
   return (
-    <Component
+    <View
       style={[
         styles.card,
         elevated && styles.elevated,
         style,
       ]}
-      onPress={onPress}
     >
       {children}
-    </Component>
+    </View>
   );
 };
 

@@ -227,7 +227,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   errorText: {
     fontSize: 18,

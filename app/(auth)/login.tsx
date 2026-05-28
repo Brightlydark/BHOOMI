@@ -11,6 +11,7 @@ import {
   Animated,
   Pressable,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
 
   // Button press animation
   const btnScale = useRef(new Animated.Value(1)).current;
@@ -65,7 +67,7 @@ export default function LoginScreen() {
             </View>
 
             <Text style={styles.heroTitle}>BHOOMI</Text>
-            <Text style={styles.heroTagline}>Intelligent Land. Empowered Farmers.</Text>
+            <Text style={styles.heroTagline}>{t('auth.tagline', 'Intelligent Land. Empowered Farmers.')}</Text>
           </MotiView>
         </SafeAreaView>
       </LinearGradient>
@@ -81,9 +83,9 @@ export default function LoginScreen() {
           transition={{ type: 'spring', delay: 300, damping: 18, stiffness: 120 }}
           style={styles.formInner}
         >
-          <Text style={styles.formTitle}>Welcome back</Text>
+          <Text style={styles.formTitle}>{t('auth.welcomeBack', 'Welcome back')}</Text>
           <Text style={styles.formSubtitle}>
-            Enter your mobile number to continue
+            {t('auth.enterMobile', 'Enter your mobile number to continue')}
           </Text>
 
           {/* Phone input */}
@@ -130,7 +132,7 @@ export default function LoginScreen() {
                 style={styles.btnGradient}
               >
                 <Text style={[styles.btnText, !canContinue && styles.btnTextDisabled]}>
-                  Continue
+                  {t('auth.continue', 'Continue')}
                 </Text>
                 {canContinue && (
                   <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
@@ -140,10 +142,10 @@ export default function LoginScreen() {
           </Animated.View>
 
           <Text style={styles.legalText}>
-            By continuing, you agree to BHOOMI's{' '}
-            <Text style={styles.legalLink}>Terms of Service</Text>
-            {' '}and{' '}
-            <Text style={styles.legalLink}>Privacy Policy</Text>
+            {t('auth.legalPrefix', "By continuing, you agree to BHOOMI's ")}
+            <Text style={styles.legalLink}>{t('auth.tos', 'Terms of Service')}</Text>
+            {t('auth.and', ' and ')}
+            <Text style={styles.legalLink}>{t('auth.privacyPolicy', 'Privacy Policy')}</Text>
           </Text>
         </MotiView>
       </KeyboardAvoidingView>

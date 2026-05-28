@@ -13,7 +13,7 @@ interface FarmMarkerProps {
   onPress: (farm: Farm) => void;
 }
 
-export const FarmMarker: React.FC<FarmMarkerProps> = ({
+export const FarmMarker: React.FC<FarmMarkerProps> = React.memo(({
   farm,
   isSelected,
   onPress,
@@ -93,7 +93,7 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
       </Animated.View>
     </Marker>
   );
-};
+});
 
 const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   markerWrapper: {

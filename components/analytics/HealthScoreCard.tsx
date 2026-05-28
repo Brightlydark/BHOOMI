@@ -14,7 +14,7 @@ interface HealthScoreCardProps {
   detailed?: boolean;
 }
 
-export const HealthScoreCard: React.FC<HealthScoreCardProps> = ({ healthData, detailed = false }) => {
+export const HealthScoreCard: React.FC<HealthScoreCardProps> = React.memo(({ healthData, detailed = false }) => {
   const { colors, isDark } = useAppTheme();
   const { t } = useTranslation();
 
@@ -89,7 +89,7 @@ export const HealthScoreCard: React.FC<HealthScoreCardProps> = ({ healthData, de
       )}
     </Card>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

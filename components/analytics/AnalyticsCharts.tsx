@@ -5,7 +5,7 @@ import { ChartCard } from './ChartCard';
 import { ChartDataPoint } from '../../services/analyticsService';
 import { useAppTheme } from '../../theme/useAppTheme';
 
-export const MoistureChart = ({ 
+export const MoistureChart = React.memo(({ 
   data, 
   trendValue, 
   trendDirection 
@@ -36,8 +36,9 @@ export const MoistureChart = ({
         areaChart
         curved
         hideRules
-        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10, width: 40, textAlign: 'center', marginLeft: -10 }}
         yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        yAxisTextNumberOfLines={1}
         width={280}
         height={140}
         maxValue={100}
@@ -47,9 +48,9 @@ export const MoistureChart = ({
       />
     </ChartCard>
   );
-};
+});
 
-export const TemperatureChart = ({ 
+export const TemperatureChart = React.memo(({ 
   data, 
   trendValue, 
   trendDirection 
@@ -80,8 +81,9 @@ export const TemperatureChart = ({
         areaChart
         curved
         hideRules
-        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10, width: 40, textAlign: 'center', marginLeft: -10 }}
         yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        yAxisTextNumberOfLines={1}
         width={280}
         height={140}
         maxValue={45}
@@ -91,9 +93,9 @@ export const TemperatureChart = ({
       />
     </ChartCard>
   );
-};
+});
 
-export const IrrigationTimeline = ({ data }: { data: ChartDataPoint[] }) => {
+export const IrrigationTimeline = React.memo(({ data }: { data: ChartDataPoint[] }) => {
   const { colors } = useAppTheme();
   const isLarge = data.length > 7;
   return (
@@ -108,7 +110,8 @@ export const IrrigationTimeline = ({ data }: { data: ChartDataPoint[] }) => {
         xAxisThickness={0}
         yAxisThickness={0}
         yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
-        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
+        yAxisTextNumberOfLines={1}
+        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10, width: 40, textAlign: 'center' }}
         noOfSections={3}
         maxValue={50}
         width={280}
@@ -118,9 +121,9 @@ export const IrrigationTimeline = ({ data }: { data: ChartDataPoint[] }) => {
       />
     </ChartCard>
   );
-};
+});
 
-export const SoilHealthChart = ({ data }: { data: ChartDataPoint[] }) => {
+export const SoilHealthChart = React.memo(({ data }: { data: ChartDataPoint[] }) => {
   const { colors } = useAppTheme();
   return (
     <ChartCard title="Soil Health Profile" icon="leaf" iconColor={colors.success}>
@@ -134,7 +137,8 @@ export const SoilHealthChart = ({ data }: { data: ChartDataPoint[] }) => {
         xAxisThickness={0}
         yAxisThickness={0}
         yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
-        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 11, fontWeight: 'bold' }}
+        yAxisTextNumberOfLines={1}
+        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 11, fontWeight: 'bold', width: 40, textAlign: 'center' }}
         noOfSections={4}
         maxValue={100}
         width={280}
@@ -144,9 +148,9 @@ export const SoilHealthChart = ({ data }: { data: ChartDataPoint[] }) => {
       />
     </ChartCard>
   );
-};
+});
 
-export const FarmComparisonChart = ({ data }: { data: ChartDataPoint[] }) => {
+export const FarmComparisonChart = React.memo(({ data }: { data: ChartDataPoint[] }) => {
   const { colors } = useAppTheme();
   return (
     <ChartCard title="Farm Productivity Comparison" icon="business" iconColor={colors.warning}>
@@ -160,7 +164,8 @@ export const FarmComparisonChart = ({ data }: { data: ChartDataPoint[] }) => {
         xAxisThickness={0}
         yAxisThickness={0}
         yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
-        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10, fontWeight: 'bold' }}
+        yAxisTextNumberOfLines={1}
+        xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 10, fontWeight: 'bold', width: 40, textAlign: 'center' }}
         noOfSections={4}
         maxValue={100}
         width={280}
@@ -170,4 +175,4 @@ export const FarmComparisonChart = ({ data }: { data: ChartDataPoint[] }) => {
       />
     </ChartCard>
   );
-};
+});

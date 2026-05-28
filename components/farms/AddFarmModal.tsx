@@ -24,6 +24,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -152,6 +153,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const { addFarm } = useFarmStore();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>('details');
   const [form, setForm] = useState<FormData>(DEFAULT_FORM);
@@ -235,12 +237,12 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       transition={{ type: 'timing', duration: 350 }}
     >
       {/* Farm name */}
-      <Text style={styles.fieldLabel}>Farm Name *</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.farmName', 'Farm Name *')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="leaf-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="E.g. Krishna Rice Farm"
+          placeholder={t('addFarm.farmNamePlaceholder', 'E.g. Krishna Rice Farm')}
           placeholderTextColor={colors.textMuted}
           value={form.name}
           onChangeText={(v) => update('name', v)}
@@ -250,12 +252,12 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       </View>
 
       {/* Address */}
-      <Text style={styles.fieldLabel}>Address / Village (Optional)</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.address', 'Address / Village (Optional)')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="location-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholder="E.g. Plot 12, Mandya, Karnataka"
+          placeholder={t('addFarm.addressPlaceholder', 'E.g. Plot 12, Mandya, Karnataka')}
           placeholderTextColor={colors.textMuted}
           value={form.address}
           onChangeText={(v) => update('address', v)}
@@ -264,7 +266,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       </View>
 
       {/* Farm size */}
-      <Text style={styles.fieldLabel}>Farm Size (Hectares)</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.farmSize', 'Farm Size (Hectares)')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="resize-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
         <TextInput
@@ -280,7 +282,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       </View>
 
       {/* Crop Type chips */}
-      <Text style={styles.fieldLabel}>Crop Type</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.cropType', 'Crop Type')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
         {CROP_TYPES.map((crop) => (
           <Pressable
@@ -311,9 +313,9 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
         >
           <Ionicons name="map" size={30} color="#FFFFFF" />
         </LinearGradient>
-        <Text style={styles.locationTitle}>Pin Your Farm Location</Text>
+        <Text style={styles.locationTitle}>{t('addFarm.pinLocation', 'Pin Your Farm Location')}</Text>
         <Text style={styles.locationSub}>
-          Enter the GPS coordinates or use your current location as the farm pin.
+          {t('addFarm.pinLocationSub', 'Enter the GPS coordinates or use your current location as the farm pin.')}
         </Text>
       </View>
 
@@ -325,21 +327,21 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
             update('pinLat', userLocation.latitude);
             update('pinLon', userLocation.longitude);
           } else {
-            Alert.alert('Location', 'GPS location not available. Please enter coordinates manually.');
+            Alert.alert(t('addFarm.locationErrorTitle', 'Location'), t('addFarm.locationErrorMsg', 'GPS location not available. Please enter coordinates manually.'));
           }
         }}
       >
         <Ionicons name="navigate" size={18} color={colors.primary} />
-        <Text style={styles.useLocationText}>Use My Current Location</Text>
+        <Text style={styles.useLocationText}>{t('addFarm.useCurrentLocation', 'Use My Current Location')}</Text>
         {form.pinLat !== null && (
           <Ionicons name="checkmark-circle" size={18} color={colors.success} />
         )}
       </Pressable>
 
-      <Text style={styles.dividerText}>— or enter manually —</Text>
+      <Text style={styles.dividerText}>{t('addFarm.orEnterManually', '— or enter manually —')}</Text>
 
       {/* Latitude */}
-      <Text style={styles.fieldLabel}>Latitude</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.latitude', 'Latitude')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="compass-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
         <TextInput
@@ -353,7 +355,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       </View>
 
       {/* Longitude */}
-      <Text style={styles.fieldLabel}>Longitude</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.longitude', 'Longitude')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="compass-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
         <TextInput
@@ -385,7 +387,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       transition={{ type: 'timing', duration: 350 }}
     >
       {/* Soil type chips */}
-      <Text style={styles.fieldLabel}>Soil Type (Optional)</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.soilType', 'Soil Type (Optional)')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
         {SOIL_TYPES.map((s) => (
           <Pressable
@@ -399,7 +401,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       </ScrollView>
 
       {/* Irrigation */}
-      <Text style={styles.fieldLabel}>Irrigation Method</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.irrigationMethod', 'Irrigation Method')}</Text>
       <View style={styles.irrigationGrid}>
         {IRRIGATION_TYPES.map((ir: { label: string; value: string }) => (
           <Pressable
@@ -424,7 +426,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       </View>
 
       {/* Optional readings */}
-      <Text style={styles.fieldLabel}>Current Soil Moisture (%) — Optional</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.soilMoistureLabel', 'Current Soil Moisture (%) — Optional')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="water-outline" size={18} color={colors.info} style={styles.inputIcon} />
         <TextInput
@@ -438,7 +440,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
         <Text style={styles.inputSuffix}>%</Text>
       </View>
 
-      <Text style={styles.fieldLabel}>Current Temperature (°C) — Optional</Text>
+      <Text style={styles.fieldLabel}>{t('addFarm.temperatureLabel', 'Current Temperature (°C) — Optional')}</Text>
       <View style={styles.inputRow}>
         <Ionicons name="thermometer-outline" size={18} color={colors.danger} style={styles.inputIcon} />
         <TextInput
@@ -455,7 +457,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       <View style={styles.aiNotice}>
         <Ionicons name="sparkles" size={14} color={colors.primary} />
         <Text style={styles.aiNoticeText}>
-          BHOOMI AI will auto-generate analytics, insights and recommendations for this farm.
+          {t('addFarm.aiNotice', 'BHOOMI AI will auto-generate analytics, insights and recommendations for this farm.')}
         </Text>
       </View>
     </MotiView>
@@ -476,20 +478,20 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
         <Ionicons name="checkmark" size={44} color="#FFFFFF" />
       </LinearGradient>
 
-      <Text style={styles.successTitle}>Farm Added!</Text>
+      <Text style={styles.successTitle}>{t('addFarm.successTitle', 'Farm Added!')}</Text>
       <Text style={styles.successSub}>
         <Text style={{ fontWeight: '700', color: colors.primary }}>{addedFarm?.name}</Text>
-        {'\n'}is now live on your BHOOMI dashboard.
+        {'\n'}{t('addFarm.successSub', 'is now live on your BHOOMI dashboard.')}
       </Text>
 
       <View style={styles.successStats}>
         <View style={styles.successStat}>
           <Text style={styles.successStatValue}>{addedFarm?.soilMoisture}%</Text>
-          <Text style={styles.successStatLabel}>Moisture</Text>
+          <Text style={styles.successStatLabel}>{t('farmDetail.moisture', 'Moisture')}</Text>
         </View>
         <View style={styles.successStat}>
           <Text style={styles.successStatValue}>{addedFarm?.temperature}°C</Text>
-          <Text style={styles.successStatLabel}>Temperature</Text>
+          <Text style={styles.successStatLabel}>{t('farmDetail.temperature', 'Temperature')}</Text>
         </View>
         <View style={styles.successStat}>
           <Text style={[styles.successStatValue, {
@@ -500,14 +502,14 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
               ? addedFarm.cropHealth.charAt(0).toUpperCase() + addedFarm.cropHealth.slice(1)
               : '—'}
           </Text>
-          <Text style={styles.successStatLabel}>Health</Text>
+          <Text style={styles.successStatLabel}>{t('farmDetail.health', 'Health')}</Text>
         </View>
       </View>
 
       <View style={styles.successInsightBadge}>
         <Ionicons name="sparkles" size={14} color={colors.primary} />
         <Text style={styles.successInsightText}>
-          AI insights generated for {addedFarm?.cropType || 'your farm'}
+          {t('addFarm.aiInsightsGenerated', { crop: addedFarm?.cropType || 'your farm', defaultValue: `AI insights generated for ${addedFarm?.cropType || 'your farm'}` })}
         </Text>
       </View>
     </MotiView>
@@ -518,9 +520,9 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
   const stepIndex = STEPS.indexOf(step);
 
   const stepTitles: Record<Step, string> = {
-    details: 'Farm Details',
-    soil: 'Soil & Irrigation',
-    success: 'Farm Added!',
+    details: t('addFarm.stepDetails', 'Farm Details'),
+    soil: t('addFarm.stepSoil', 'Soil & Irrigation'),
+    success: t('addFarm.successTitle', 'Farm Added!'),
   };
 
   /* -------- RENDER -------- */
@@ -539,7 +541,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
             <View>
               <Text style={styles.modalTitle}>{stepTitles[step]}</Text>
               {step !== 'success' && (
-                <Text style={styles.modalSubtitle}>Step {stepIndex + 1} of {STEPS.length}</Text>
+                <Text style={styles.modalSubtitle}>{t('addFarm.stepOf', { current: stepIndex + 1, total: STEPS.length, defaultValue: `Step ${stepIndex + 1} of ${STEPS.length}` })}</Text>
               )}
             </View>
             <Pressable style={styles.closeBtn} onPress={onClose}>
@@ -598,7 +600,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
                   style={styles.btnGradient}
                 >
                   <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-                  <Text style={styles.btnPrimaryText}>View on Map</Text>
+                  <Text style={styles.btnPrimaryText}>{t('addFarm.viewOnMap', 'View on Map')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </Animated.View>
@@ -610,7 +612,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
                   onPress={() => setStep(STEPS[stepIndex - 1])}
                 >
                   <Ionicons name="arrow-back" size={16} color={colors.text} />
-                  <Text style={styles.btnSecondaryText}>Back</Text>
+                  <Text style={styles.btnSecondaryText}>{t('addFarm.back', 'Back')}</Text>
                 </Pressable>
               )}
 
@@ -631,11 +633,11 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
                       style={styles.btnGradient}
                     >
                       {saving ? (
-                        <Text style={styles.btnPrimaryText}>Saving…</Text>
+                        <Text style={styles.btnPrimaryText}>{t('addFarm.saving', 'Saving…')}</Text>
                       ) : (
                         <>
                           <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                          <Text style={styles.btnPrimaryText}>Add Farm</Text>
+                          <Text style={styles.btnPrimaryText}>{t('addFarm.addFarm', 'Add Farm')}</Text>
                         </>
                       )}
                     </LinearGradient>
@@ -657,7 +659,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
                       end={{ x: 1, y: 0 }}
                       style={styles.btnGradient}
                     >
-                      <Text style={styles.btnPrimaryText}>Next</Text>
+                      <Text style={styles.btnPrimaryText}>{t('addFarm.next', 'Next')}</Text>
                       <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
                     </LinearGradient>
                   </TouchableOpacity>
@@ -766,7 +768,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) =>
     },
     chipActive: {
       borderColor: colors.primary,
-      backgroundColor: isDark ? `${colors.primary}20` : '#ECFDF5',
+      backgroundColor: isDark ? `${colors.primary}20` : `${colors.primary}10`,
     },
     chipText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
     chipTextActive: { color: colors.primary, fontWeight: '700' },
@@ -793,7 +795,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) =>
     },
     useLocationBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
-      backgroundColor: isDark ? `${colors.primary}15` : '#ECFDF5',
+      backgroundColor: isDark ? `${colors.primary}15` : `${colors.primary}10`,
       borderWidth: 1.5, borderColor: colors.primary,
       borderRadius: 14, padding: 14, marginBottom: 16,
     },
@@ -807,7 +809,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) =>
     coordsBadge: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       marginTop: 12, paddingVertical: 8, paddingHorizontal: 12,
-      backgroundColor: isDark ? `${colors.primary}15` : '#ECFDF5',
+      backgroundColor: isDark ? `${colors.primary}15` : `${colors.primary}10`,
       borderRadius: 10,
     },
     coordsText: {
@@ -836,7 +838,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) =>
     aiNotice: {
       flexDirection: 'row', alignItems: 'flex-start', gap: 8,
       marginTop: 16, padding: 14,
-      backgroundColor: isDark ? `${colors.primary}10` : '#F0FDF4',
+      backgroundColor: isDark ? `${colors.primary}10` : `${colors.primary}05`,
       borderRadius: 12, borderWidth: 1,
       borderColor: isDark ? `${colors.primary}30` : '#D1FAE5',
     },
@@ -882,7 +884,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) =>
     successInsightBadge: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       paddingHorizontal: 14, paddingVertical: 8,
-      backgroundColor: isDark ? `${colors.primary}15` : '#ECFDF5',
+      backgroundColor: isDark ? `${colors.primary}15` : `${colors.primary}10`,
       borderRadius: 20,
     },
     successInsightText: {
