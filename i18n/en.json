@@ -13,7 +13,11 @@
     "filter": "Filter",
     "refresh": "Refresh",
     "noData": "No data available",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "realTime": "Real-time",
+    "precipitation": "Precipitation",
+    "wind": "Wind",
+    "weatherError": "Failed to load weather data."
   },
   "nav": {
     "home": "Home",
@@ -58,7 +62,7 @@
     }
   },
   "insights": {
-    "title": "Insights & Recommendations",
+    "title": "BHOOMI Insights",
     "filterAll": "All",
     "filterIrrigation": "Irrigation",
     "filterSoil": "Soil",
@@ -69,6 +73,8 @@
     "summaryTotal": "Total",
     "summaryCritical": "Critical",
     "summaryFarms": "Farms",
+    "farmSpecific": "Showing farm-specific data and alerts",
+    "monitoringFields": "Monitoring {{count}} field",
     "errorTitle": "Could not load insights",
     "errorDescription": "Check your connection and try again.",
     "emptyTitle": "No insights yet",
@@ -101,9 +107,157 @@
     "logoutConfirmTitle": "Confirm Logout",
     "logoutConfirmMessage": "Are you sure you want to logout?"
   },
+  "alerts": {
+    "title": "Alerts",
+    "urgent": "urgent"
+  },
+  "farmDetail": {
+    "notFound": "Farm not found",
+    "goBack": "Go Back",
+    "removeFarm": "Remove Farm",
+    "removeConfirmMsg": "Are you sure you want to remove this farm? All associated analytics and insights will be deleted.",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "moisture": "Moisture",
+    "temperature": "Temperature",
+    "health": "Health",
+    "locationDetails": "Location Details",
+    "kmAway": "{{distance}} km away",
+    "soilMoistureHistory": "Soil Moisture History (Last 7 Days)",
+    "temperatureHistory": "Temperature History (Last 7 Days)",
+    "cropRecommendations": "Crop Recommendations",
+    "recentActivity": "Recent Activity",
+    "reportIssue": "Report Issue"
+  },
   "languages": {
     "en": "English",
     "hi": "हिंदी (Hindi)",
     "kn": "ಕನ್ನಡ (Kannada)"
+  },
+  "analytics": {
+    "ui": {
+      "farmHealthScore": "Farm Health Score",
+      "improving": "Improving",
+      "declining": "Declining",
+      "stable": "Stable",
+      "aiInterpretation": "AI Interpretation",
+      "recommendedActions": "Recommended Actions",
+      "analyticsTrends": "Analytics & Trends",
+      "allFarms": "All Farms",
+      "activeField": "Active Field",
+      "localWeatherContext": "Local Weather Context",
+      "weatherAt": "Weather at {{name}}",
+      "aiInsight": "AI Insight",
+      "confidence": "{{value}}% Confidence"
+    },
+    "common": {
+      "thisFarm": "this farm",
+      "affectedCrops": "affected crops"
+    },
+    "predictions": {
+      "heavyRain": "Heavy rain expected soon ({{rainfall}}%). Pause scheduled irrigation.",
+      "heatStress": "Extreme heat stress detected (UV {{uv}}). Increase soil moisture buffering.",
+      "highHumidity": "Rising humidity increases fungal infection risk. Monitor crops closely.",
+      "weatherStable": "General weather is {{condition}}. Conditions remain stable.",
+      "globalStable": "AI predicts stable overall conditions across all farms. Minor temperature drop expected.",
+      "lowMoisture": "Irrigation strongly recommended within next 6 hours to prevent yield loss.",
+      "heatWarning": "Crop stress probability increased by 18% for {{cropType}} due to sustained heat.",
+      "diseaseRisk": "Possible fungal risk detected due to recent humidity spike. Inspect lower leaves.",
+      "optimal": "Optimal conditions for {{cropType}}. No immediate interventions required."
+    },
+    "recommendations": {
+      "delayFertilizer": "Delay fertilizer application due to upcoming rain",
+      "ensureDrainage": "Ensure proper drainage in low-lying areas",
+      "applyMulch": "Apply mulching to retain soil moisture in high heat",
+      "morningIrrigation": "Irrigate during early morning or late evening",
+      "monitorFungal": "Monitor for fungal diseases due to high humidity",
+      "criticalDrip": "Critical: Initiate drip irrigation immediately",
+      "haltIrrigation": "Soil is waterlogged. Halt irrigation schedules",
+      "urgentInspection": "Schedule urgent agronomic inspection",
+      "targetedTreatment": "Apply targeted treatment for {{cropType}}",
+      "continueCare": "Continue standard care for {{cropType}}",
+      "weeklyScouting": "Conduct weekly pest scouting",
+      "maintainIrrigation": "Maintain current irrigation schedule",
+      "monitorNutrients": "Monitor soil nutrient levels"
+    },
+    "activity": {
+      "irrigationOn": "Automated Irrigation System On",
+      "rainfall": "Rainfall recorded",
+      "sensorUpdate": "Moisture sensor reading updated",
+      "pathologyScan": "Pathology scan completed",
+      "agronomicCheck": "Routine agronomic check",
+      "fertilizer": "Fertilizer applied (NPK)"
+    },
+    "time": {
+      "hoursAgo": "{{count}} hours ago",
+      "minsAgo": "{{count}} mins ago",
+      "daysAgo": "{{count}} days ago",
+      "yesterday": "Yesterday"
+    },
+    "healthScore": {
+      "noFarmsInsight": "No farms available to analyze.",
+      "noFarmsReason": "No data",
+      "noFarmsRec": "Add a farm to begin.",
+      "metrics": {
+        "moisture": "Moisture",
+        "weather": "Weather",
+        "soil": "Soil",
+        "pests": "Pests"
+      },
+      "values": {
+        "optimal": "Optimal",
+        "clear": "Clear",
+        "healthy": "Healthy",
+        "lowRisk": "Low Risk",
+        "critical": "Critical",
+        "highRisk": "High Risk",
+        "heatStress": "Heat Stress",
+        "elevated": "Elevated",
+        "rainfall": "Rainfall"
+      },
+      "insights": {
+        "excellent": "Healthy moisture and weather conditions detected.",
+        "critical": "Critical conditions detected. Immediate intervention required to prevent yield loss.",
+        "moderate": "Moderate risk factors present. Monitor moisture levels and upcoming weather closely.",
+        "heatStress": "Heat stress slightly reducing crop stability.",
+        "stable": "Conditions are stable. Continue standard irrigation and monitoring protocols.",
+        "rainfall": "Recent rainfall is improving soil retention and stability."
+      },
+      "details": {
+        "criticalMoisture": "Soil moisture and health metrics have plummeted to critical thresholds.",
+        "pestActive": "High probability of active pest infestation or fungal disease spreading rapidly.",
+        "metricsDeviated": "Certain environmental metrics have deviated from optimal growth ranges.",
+        "heatEvaporation": "Sustained high temperatures are accelerating soil evaporation and stressing plants.",
+        "earlyDisease": "Early signs of crop stress or mild disease symptoms are visible.",
+        "metricsBaseline": "All major metrics are currently within acceptable baseline ranges.",
+        "precipitationSupplementing": "Natural precipitation is actively supplementing soil moisture efficiently.",
+        "peakEfficiency": "The agricultural ecosystem is performing at peak efficiency.",
+        "perfectlyAligned": "Moisture, temperature, and soil health are perfectly aligned."
+      },
+      "recs": {
+        "emergencyIrrigation": "Initiate emergency irrigation if moisture is severely low.",
+        "pestControl": "Apply immediate targeted pest control or systemic fungicide.",
+        "increaseScouting": "Increase frequency of crop health scouting and sensor monitoring.",
+        "heatShielding": "Prepare heat shielding or apply mulching to retain soil moisture.",
+        "monitorFungal": "Monitor closely for fungal growth and apply nutrient balancing.",
+        "maintainIrrigation": "Maintain current automated irrigation schedules.",
+        "reduceIrrigation": "Reduce artificial irrigation volume due to recent rainfall.",
+        "continueOptimal": "Continue optimal care protocols. No interventions needed."
+      },
+      "trendReasons": {
+        "balanced": "Environmental metrics remain balanced",
+        "moistureDropped": "Soil moisture dropped significantly",
+        "criticalPersisting": "Critical conditions persisting",
+        "pestRising": "Pest activity rising rapidly",
+        "heatStress": "Heat stress increasing",
+        "suboptimalSoil": "Suboptimal soil conditions detected",
+        "earlyDisease": "Early disease symptoms detected",
+        "rainfallRestored": "Recent rainfall restored moisture",
+        "tempStabilized": "Temperature conditions stabilized",
+        "healthyRange": "Conditions remain within healthy range",
+        "irrigationEfficiency": "Irrigation efficiency increased",
+        "peakEfficiency": "Metrics at peak efficiency"
+      }
+    }
   }
 }

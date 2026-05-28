@@ -3,14 +3,18 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Droplets, Thermometer, Sprout, ShieldAlert, CheckCircle2, ChevronRight, Trash2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { useFarmStore } from '../../store/farmStore';
 import { removeInsightsForFarm } from '../../services/insightStore';
 
 import { useFarms } from '../../hooks/useFarms';
 import { useLocation } from '../../hooks/useLocation';
+import { useWeather } from '../../hooks/useWeather';
+import { generateCropRecommendations, generateRecentActivity, calculateFarmHealthScore } from '../../services/analyticsService';
 import { MetricChart } from '../../components/charts/MetricChart';
 import { WeatherCard } from '../../components/common/WeatherCard';
+import { HealthScoreCard } from '../../components/analytics/HealthScoreCard';
 import { Card } from '../../components/common/Card';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
@@ -26,13 +30,19 @@ export default function FarmDetailScreen() {
   const { removeFarm } = useFarmStore();
 
   const farm = useMemo(() => farms.find(f => f.id === id), [id, farms]);
+  const { weather } = useWeather(farm?.location?.latitude, farm?.location?.longitude);
+
+  const { t } = useTranslation();
+  const dynamicRecommendations = useMemo(() => farm ? generateCropRecommendations(farm, weather, t) : [], [farm, weather, t]);
+  const dynamicActivities = useMemo(() => farm ? generateRecentActivity(farm, weather, t) : [], [farm, weather, t]);
+  const farmHealthData = useMemo(() => farm ? calculateFarmHealthScore([farm], farm, weather, t) : null, [farm, weather, t]);
 
   if (!farm) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Farm not found</Text>
+        <Text style={styles.errorText}>{t('farmDetail.notFound', 'Farm not found')}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>Go Back</Text>
+          <Text style={styles.backText}>{t('farmDetail.goBack', 'Go Back')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -58,12 +68,12 @@ export default function FarmDetailScreen() {
   const handleDelete = () => {
     if (!farm) return;
     Alert.alert(
-      "Remove Farm",
-      "Are you sure you want to remove this farm? All associated analytics and insights will be deleted.",
+      t('farmDetail.removeFarm', "Remove Farm"),
+      t('farmDetail.removeConfirmMsg', "Are you sure you want to remove this farm? All associated analytics and insights will be deleted."),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t('farmDetail.cancel', "Cancel"), style: "cancel" },
         {
-          text: "Remove",
+          text: t('farmDetail.remove', "Remove"),
           style: "destructive",
           onPress: async () => {
             removeFarm(farm.id);
@@ -89,6 +99,9 @@ export default function FarmDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
+        {/* Premium Health Score */}
+        {farmHealthData && <HealthScoreCard healthData={farmHealthData} detailed={true} />}
+
         {/* Quick Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
@@ -96,15 +109,17 @@ export default function FarmDetailScreen() {
               <Droplets color={colors.info} size={20} />
             </View>
             <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{farm.soilMoisture}%</Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Moisture</Text>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>{t('farmDetail.moisture', 'Moisture')}</Text>
           </View>
           
           <View style={styles.statBox}>
             <View style={[styles.iconCircle, { backgroundColor: isDark ? `${colors.danger}20` : '#FEE2E2' }]}>
               <Thermometer color={colors.danger} size={20} />
             </View>
-            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{farm.temperature}°C</Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Temperature</Text>
+            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+              {weather ? Math.round(weather.temperature) : farm.temperature}°C
+            </Text>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>{t('farmDetail.temperature', 'Temperature')}</Text>
           </View>
 
           <View style={styles.statBox}>
@@ -114,32 +129,32 @@ export default function FarmDetailScreen() {
             <Text style={[styles.statValue, { color: getHealthColor(farm.cropHealth) }]} numberOfLines={1} adjustsFontSizeToFit>
               {farm.cropHealth.toUpperCase()}
             </Text>
-            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Health</Text>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>{t('farmDetail.health', 'Health')}</Text>
           </View>
         </View>
 
         {/* Address Card */}
         <Card style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Location Details</Text>
+          <Text style={styles.infoTitle}>{t('farmDetail.locationDetails', 'Location Details')}</Text>
           <Text style={styles.infoText}>{farm.address}</Text>
           {farm.distance !== undefined && farm.distance !== null ? (
-            <Text style={styles.distanceText}>📍 {farm.distance.toFixed(2)} km away</Text>
+            <Text style={styles.distanceText}>📍 {t('farmDetail.kmAway', { distance: farm.distance.toFixed(2), defaultValue: `${farm.distance.toFixed(2)} km away` })}</Text>
           ) : null}
         </Card>
 
         {/* Weather Forecast */}
-        <WeatherCard />
+        <WeatherCard lat={farm.location.latitude} lon={farm.location.longitude} />
 
         {/* Historical Charts */}
         <MetricChart 
-          title="Soil Moisture History (Last 7 Days)" 
+          title={t('farmDetail.soilMoistureHistory', "Soil Moisture History (Last 7 Days)")} 
           data={moistureData} 
           color={colors.info} 
           suffix="%" 
         />
         
         <MetricChart 
-          title="Temperature History (Last 7 Days)" 
+          title={t('farmDetail.temperatureHistory', "Temperature History (Last 7 Days)")} 
           data={temperatureData} 
           color={colors.danger} 
           suffix="°C" 
@@ -147,8 +162,8 @@ export default function FarmDetailScreen() {
 
         {/* Crop Recommendations */}
         <Card style={styles.listCard}>
-          <Text style={styles.listTitle}>Crop Recommendations</Text>
-          {['Apply NPK Fertilizer', 'Check for stem borers', 'Increase irrigation frequency'].map((rec, i) => (
+          <Text style={styles.listTitle}>{t('farmDetail.cropRecommendations', 'Crop Recommendations')}</Text>
+          {dynamicRecommendations.map((rec, i) => (
             <View key={i} style={styles.listItem}>
               <CheckCircle2 color={colors.success} size={20} />
               <Text style={styles.listText}>{rec}</Text>
@@ -158,12 +173,8 @@ export default function FarmDetailScreen() {
 
         {/* Recent Activity */}
         <Card style={styles.listCard}>
-          <Text style={styles.listTitle}>Recent Activity</Text>
-          {[
-            { action: 'Irrigation System On', time: '2 hours ago' },
-            { action: 'Soil test completed', time: '1 day ago' },
-            { action: 'Fertilizer applied', time: '3 days ago' }
-          ].map((activity, i) => (
+          <Text style={styles.listTitle}>{t('farmDetail.recentActivity', 'Recent Activity')}</Text>
+          {dynamicActivities.map((activity, i) => (
             <View key={i} style={styles.listItem}>
               <View style={styles.activityDot} />
               <View style={{ flex: 1 }}>
@@ -178,7 +189,7 @@ export default function FarmDetailScreen() {
         {/* Action Buttons */}
         <TouchableOpacity style={styles.actionButton}>
           <ShieldAlert color={colors.textInverse || '#FFFFFF'} size={20} />
-          <Text style={styles.actionButtonText}>Report Issue</Text>
+          <Text style={styles.actionButtonText}>{t('farmDetail.reportIssue', 'Report Issue')}</Text>
         </TouchableOpacity>
 
       </ScrollView>

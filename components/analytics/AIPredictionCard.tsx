@@ -7,6 +7,8 @@ import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
 import { useMemo } from 'react';
 
+import { useTranslation } from 'react-i18next';
+
 interface AIPredictionCardProps {
   prediction: AIPrediction;
 }
@@ -14,6 +16,7 @@ interface AIPredictionCardProps {
 export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }) => {
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
 
   const getGradientColors = (): readonly [string, string, ...string[]] => {
     switch (prediction.level) {
@@ -55,10 +58,10 @@ export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <Ionicons name="sparkles" size={16} color={colors.primary} />
-            <Text style={styles.titleText}>AI Insight</Text>
+            <Text style={styles.titleText}>{t('analytics.ui.aiInsight', 'AI Insight')}</Text>
           </View>
           <View style={styles.confidenceBadge}>
-            <Text style={styles.confidenceText}>{prediction.confidence}% Confidence</Text>
+            <Text style={styles.confidenceText}>{t('analytics.ui.confidence', { value: prediction.confidence, defaultValue: `${prediction.confidence}% Confidence` })}</Text>
           </View>
         </View>
 

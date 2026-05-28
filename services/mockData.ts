@@ -388,6 +388,7 @@ export const generateWeatherData = (location: Coordinates): WeatherData => {
       maxTemp: Math.round(currentTemp + randomInRange(2, 8)),
       rainfall: Math.random() > 0.7 ? randomInRange(0, 50) : 0,
       condition: Math.random() > 0.7 ? 'rainy' : Math.random() > 0.5 ? 'cloudy' : 'sunny',
+      icon: Math.random() > 0.7 ? 'CloudRain' : Math.random() > 0.5 ? 'Cloud' : 'Sun',
     });
   }
 
@@ -396,6 +397,9 @@ export const generateWeatherData = (location: Coordinates): WeatherData => {
     humidity: Math.round(randomInRange(50, 85)),
     rainfall: Math.round(randomInRange(0, 100)),
     windSpeed: Math.round(randomInRange(5, 25)),
+    condition: 'Partly cloudy',
+    icon: 'Cloud',
+    uvIndex: 5,
     forecast,
   };
 };

@@ -33,6 +33,7 @@ import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
 import { generateFarmInsights, calculateDistance } from '../../services/mockData';
 import { saveInsightsForFarm } from '../../services/insightStore';
+import { fetchWeather } from '../../services/weatherService';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
@@ -184,6 +185,15 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
         pinLat: userLocation.latitude,
         pinLon: userLocation.longitude,
       }));
+      // Auto-fetch weather to pre-fill temperature
+      fetchWeather(userLocation.latitude, userLocation.longitude)
+        .then((weather) => {
+          setForm((f) => ({
+            ...f,
+            temperature: Math.round(weather.temperature).toString()
+          }));
+        })
+        .catch(() => {}); // silent fail, user can enter manually
     }
   }, [userLocation, visible]);
 

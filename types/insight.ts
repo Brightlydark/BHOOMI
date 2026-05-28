@@ -27,6 +27,9 @@ export interface WeatherData {
   humidity: number;
   rainfall: number;
   windSpeed: number;
+  condition: string;
+  uvIndex?: number;
+  icon?: string;
   forecast: DailyForecast[];
 }
 

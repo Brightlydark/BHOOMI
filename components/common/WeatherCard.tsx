@@ -1,63 +1,119 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { CloudRain, Sun, Wind, Droplets } from 'lucide-react-native';
+import { CloudRain, Sun, Moon, Wind, Droplets, Cloud, CloudFog, CloudDrizzle, CloudSnow, Snowflake, CloudLightning } from 'lucide-react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
-import { useMemo } from 'react';
+import { useWeather } from '../../hooks/useWeather';
+import { LoadingSkeleton } from './LoadingSkeleton';
 
-export const WeatherCard = () => {
-  const { colors } = useAppTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+import { useTranslation } from 'react-i18next';
+
+interface WeatherCardProps {
+  lat?: number;
+  lon?: number;
+  title?: string;
+  compact?: boolean;
+}
+
+const IconMap: Record<string, any> = {
+  'Sun': Sun,
+  'Moon': Moon,
+  'Cloud': Cloud,
+  'CloudFog': CloudFog,
+  'CloudDrizzle': CloudDrizzle,
+  'CloudRain': CloudRain,
+  'CloudSnow': CloudSnow,
+  'Snowflake': Snowflake,
+  'CloudLightning': CloudLightning,
+};
+
+export const WeatherCard = ({ lat, lon, title, compact = false }: WeatherCardProps) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t } = useTranslation();
+
+  const { weather, loading, error } = useWeather(lat, lon);
+  
+  const displayTitle = title || t('home.weatherSummary', 'Weather Forecast');
+
+  if (!lat || !lon) {
+    return null; // or empty state if we wanted
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+         <LoadingSkeleton count={1} height={140} />
+      </View>
+    );
+  }
+
+  if (error || !weather) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: colors.textSecondary }}>{t('common.weatherError', 'Failed to load weather data.')}</Text>
+      </View>
+    );
+  }
+
+  const WeatherIcon = weather.icon && IconMap[weather.icon] ? IconMap[weather.icon] : Cloud;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Weather Forecast</Text>
-        <Text style={styles.subtitle}>Next 24 Hours</Text>
+        <Text style={styles.title}>{displayTitle}</Text>
+        <Text style={styles.subtitle}>{t('common.realTime', 'Real-time')}</Text>
       </View>
 
       <View style={styles.mainRow}>
         <View style={styles.tempContainer}>
-          <Sun color="#F59E0B" size={48} />
-          <Text style={styles.temperature}>32°</Text>
+          <WeatherIcon color={isDark ? '#FCD34D' : '#F59E0B'} size={48} />
+          <Text style={styles.temperature}>{Math.round(weather.temperature)}°</Text>
         </View>
-        <Text style={styles.condition}>Sunny with brief showers expected</Text>
+        <Text style={styles.condition}>{weather.condition}</Text>
       </View>
 
-      <View style={styles.statsRow}>
-        <View style={styles.stat}>
-          <CloudRain color="#3B82F6" size={20} />
-          <Text style={styles.statLabel}>Precipitation</Text>
-          <Text style={styles.statValue}>20%</Text>
+      {!compact && (
+        <View style={styles.statsRow}>
+          <View style={styles.stat}>
+            <CloudRain color="#3B82F6" size={20} />
+            <Text style={styles.statLabel}>{t('common.precipitation', 'Precipitation')}</Text>
+            {/* If current rainfall is > 0 show it, otherwise show today's probability */}
+            <Text style={styles.statValue}>
+              {weather.rainfall > 0 
+                ? `${weather.rainfall.toFixed(1)} mm` 
+                : `${weather.forecast[0]?.rainfall ?? 0}%`}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.stat}>
+            <Droplets color="#10B981" size={20} />
+            <Text style={styles.statLabel}>{t('home.humidity', 'Humidity')}</Text>
+            <Text style={styles.statValue}>{Math.round(weather.humidity)}%</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.stat}>
+            <Wind color="#8B5CF6" size={20} />
+            <Text style={styles.statLabel}>{t('common.wind', 'Wind')}</Text>
+            <Text style={styles.statValue}>{Math.round(weather.windSpeed)} km/h</Text>
+          </View>
         </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Droplets color="#10B981" size={20} />
-          <Text style={styles.statLabel}>Humidity</Text>
-          <Text style={styles.statValue}>65%</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Wind color="#8B5CF6" size={20} />
-          <Text style={styles.statLabel}>Wind</Text>
-          <Text style={styles.statValue}>12 km/h</Text>
-        </View>
-      </View>
+      )}
     </View>
   );
 };
 
-const createStyles = (colors: ColorPalette) => StyleSheet.create({
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: isDark ? colors.shadow : '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: isDark ? 0.3 : 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -72,7 +128,8 @@ const createStyles = (colors: ColorPalette) => StyleSheet.create({
   },
   subtitle: {
     fontSize: 12,
-    color: colors.textSecondary,
+    color: colors.success,
+    fontWeight: '600',
   },
   mainRow: {
     flexDirection: 'row',
@@ -92,9 +149,10 @@ const createStyles = (colors: ColorPalette) => StyleSheet.create({
   },
   condition: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '500',
     color: colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   statsRow: {
     flexDirection: 'row',

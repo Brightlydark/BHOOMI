@@ -18,9 +18,12 @@ import { InsightCard } from '../../components/insights/InsightCard';
 import { useLocation } from '../../hooks/useLocation';
 import { useFarms } from '../../hooks/useFarms';
 import { useInsights } from '../../hooks/useInsights';
+import { useWeather } from '../../hooks/useWeather';
 import { useUserStore } from '../../store/userStore';
 import { CropHealthStatus } from '../../types/farm';
 import { useState, useMemo } from 'react';
+import { calculateFarmHealthScore } from '../../services/analyticsService';
+import { HealthScoreCard } from '../../components/analytics/HealthScoreCard';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
 
@@ -41,6 +44,7 @@ import {
 } from '../../components/analytics/AnalyticsCharts';
 import { AIPredictionCard } from '../../components/analytics/AIPredictionCard';
 import { HomeHeader } from '../../components/home/HomeHeader';
+import { WeatherCard } from '../../components/common/WeatherCard';
 // Health status styling
 const healthColors: Record<CropHealthStatus, { bg: string; text: string; icon: string }> = {
   good: { bg: '#ECFDF5', text: '#059669', icon: '🌿' },
@@ -54,6 +58,10 @@ export default function HomeScreen() {
   const { location } = useLocation();
   const { farms, loading: farmsLoading, refreshFarms, selectedFarm, selectFarm } = useFarms(location);
   const { insights, loading: insightsLoading, criticalCount } = useInsights(farms);
+  const { weather } = useWeather(
+    selectedFarm ? selectedFarm.location.latitude : location?.latitude,
+    selectedFarm ? selectedFarm.location.longitude : location?.longitude
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [timeframe, setTimeframe] = useState<7 | 30 | 90>(7);
 
@@ -74,8 +82,9 @@ export default function HomeScreen() {
     displayFarms.length > 0
       ? Math.round(displayFarms.reduce((s, f) => s + f.soilMoisture, 0) / displayFarms.length)
       : 0;
-  const avgTemp =
-    displayFarms.length > 0
+  const avgTemp = weather
+    ? Math.round(weather.temperature * 10) / 10
+    : displayFarms.length > 0
       ? Math.round((displayFarms.reduce((s, f) => s + f.temperature, 0) / displayFarms.length) * 10) / 10
       : 0;
   const healthCounts = displayFarms.reduce(
@@ -89,9 +98,8 @@ export default function HomeScreen() {
   const irrigationData = useMemo(() => generateIrrigationTimeline(timeframe), [selectedFarm, timeframe]);
   const soilData = useMemo(() => selectedFarm ? generateSoilHealthData(selectedFarm.id) : [], [selectedFarm]);
   const comparisonInfo = useMemo(() => !selectedFarm ? generateFarmComparison(farms) : { data: [] }, [farms, selectedFarm]);
-  const aiPrediction = useMemo(() => generateAIPrediction(selectedFarm), [selectedFarm, avgMoisture, avgTemp]);
-
-
+  const aiPrediction = useMemo(() => generateAIPrediction(selectedFarm, weather, t), [selectedFarm, weather, t]);
+  const farmHealthData = useMemo(() => calculateFarmHealthScore(displayFarms, selectedFarm, weather, t), [displayFarms, selectedFarm, weather, t]);
 
   const isLoading = farmsLoading || insightsLoading;
 
@@ -128,7 +136,7 @@ export default function HomeScreen() {
               onPress={() => selectFarm(null)}
             >
               <Text style={[styles.farmTabText, !selectedFarm && styles.farmTabTextActive]}>
-                All Farms
+                {t('analytics.ui.allFarms', 'All Farms')}
               </Text>
             </Pressable>
             {farms.map((farm) => (
@@ -158,7 +166,7 @@ export default function HomeScreen() {
             <StatPill
               icon="business"
               iconColor="#3B82F6"
-              label={selectedFarm ? "Active Field" : t('home.statFarms')}
+              label={selectedFarm ? t('analytics.ui.activeField', 'Active Field') : t('home.statFarms')}
               value={String(displayFarms.length)}
             />
             <View style={styles.statDivider} />
@@ -178,38 +186,27 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Crop Health Overview */}
-        <View style={styles.section}>
-          <SectionTitle
-            title={t('home.cropHealthTitle')}
-            onMore={() => router.push('/(tabs)/map')}
-          />
-          {isLoading ? (
-            <LoadingSkeleton count={3} height={72} />
-          ) : (
-            <View style={styles.healthRow}>
-              {(['good', 'moderate', 'poor'] as CropHealthStatus[]).map((status) => {
-                const cfg = healthColors[status];
-                return (
-                  <View key={status} style={[styles.healthCard, { backgroundColor: cfg.bg }]}>
-                    <Text style={styles.healthEmoji}>{cfg.icon}</Text>
-                    <Text style={[styles.healthCount, { color: cfg.text }]}>
-                      {healthCounts[status] ?? 0}
-                    </Text>
-                    <Text style={[styles.healthLabel, { color: cfg.text }]}>
-                      {t(`map.healthStatus.${status}`)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </View>
+        {/* Farm Health Score (Replaces old Crop Health Overview) */}
+        {!isLoading && (
+          <View style={[styles.section, { paddingHorizontal: 16 }]}>
+            <HealthScoreCard healthData={farmHealthData} />
+          </View>
+        )}
 
         {/* Analytics Section */}
         {!isLoading && (
           <View style={styles.section}>
-            <SectionTitle title="Analytics & Trends" />
+            <SectionTitle title={t('analytics.ui.analyticsTrends', 'Analytics & Trends')} />
+
+            {/* Display local weather context on dashboard */}
+            {location && (
+              <WeatherCard 
+                lat={location.latitude} 
+                lon={location.longitude} 
+                title={selectedFarm ? t('analytics.ui.weatherAt', { name: selectedFarm.name, defaultValue: `Weather at ${selectedFarm.name}` }) : t('analytics.ui.localWeatherContext', 'Local Weather Context')}
+                compact={false}
+              />
+            )}
             
             <View style={styles.timeframeContainer}>
               {([7, 30, 90] as const).map((days) => (

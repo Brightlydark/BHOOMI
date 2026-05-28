@@ -85,15 +85,15 @@ export default function InsightsScreen() {
           {farms.length > 0 && (
             <Text style={styles.headerSubtitle}>
               {selectedFarm 
-                ? 'Showing farm-specific data and alerts' 
-                : `Monitoring ${farms.length} field${farms.length !== 1 ? 's' : ''}`}
+                ? t('insights.farmSpecific', 'Showing farm-specific data and alerts') 
+                : t('insights.monitoringFields', { count: farms.length, defaultValue: `Monitoring ${farms.length} field${farms.length !== 1 ? 's' : ''}` })}
             </Text>
           )}
         </View>
         {currentCriticalCount > 0 && (
           <View style={styles.alertBadge}>
             <Ionicons name="warning" size={13} color="#FFFFFF" />
-            <Text style={styles.alertBadgeText}>{currentCriticalCount} urgent</Text>
+            <Text style={styles.alertBadgeText}>{currentCriticalCount} {t('alerts.urgent', 'urgent')}</Text>
           </View>
         )}
       </View>
@@ -111,7 +111,7 @@ export default function InsightsScreen() {
             onPress={() => selectFarm(null)}
           >
             <Text style={[styles.farmTabText, !selectedFarm && styles.farmTabTextActive]}>
-              All Farms
+              {t('analytics.ui.allFarms', 'All Farms')}
             </Text>
           </Pressable>
           {farms.map((farm) => (
@@ -138,21 +138,21 @@ export default function InsightsScreen() {
             icon="flash"
             iconColor={colors.primary}
             bg={isDark ? `${colors.primary}20` : colors.successLight}
-            label="Total Insights"
+            label={t('insights.summaryTotal', 'Total Insights')}
             value={String(farmFilteredInsights.length)}
           />
           <SummaryCard
             icon="warning"
             iconColor={colors.danger}
             bg={isDark ? `${colors.danger}20` : colors.dangerLight}
-            label="Alerts"
+            label={t('alerts.title', 'Alerts')}
             value={String(currentCriticalCount)}
           />
           <SummaryCard
             icon="business"
             iconColor={colors.info}
             bg={isDark ? `${colors.info}20` : colors.infoLight}
-            label={selectedFarm ? "Active Field" : "Fields"}
+            label={selectedFarm ? t('analytics.ui.activeField', 'Active Field') : t('insights.summaryFarms', 'Fields')}
             value={selectedFarm ? "1" : String(farms.length)}
           />
         </View>
