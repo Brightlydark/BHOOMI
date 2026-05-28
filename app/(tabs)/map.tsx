@@ -10,7 +10,7 @@ import {
   Keyboard,
   Animated,
 } from 'react-native';
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -20,18 +20,21 @@ import { useRouter } from 'expo-router';
 import { MapViewWrapper } from '../../components/maps/MapViewWrapper';
 import { EmptyState } from '../../components/common/EmptyState';
 import { AddFarmModal } from '../../components/farms/AddFarmModal';
+import { QuickAnalysisPanel } from '../../components/farms/QuickAnalysisPanel';
 import { useLocation } from '../../hooks/useLocation';
 import { useFarms } from '../../hooks/useFarms';
 import { Farm } from '../../types/farm';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
+import { validateFarmLocation, LocationValidationResult, ValidationStatus } from '../../services/locationValidator';
+import { Coordinates } from '../../types/farm';
 
 export default function MapScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const mapRef = useRef<any>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['32%', '55%'], []);
+  const snapPoints = useMemo(() => [], []);
 
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
@@ -44,6 +47,12 @@ export default function MapScreen() {
     Animated.spring(fabScale, { toValue: 1, useNativeDriver: true, tension: 200 }).start();
 
   const [showAddFarm, setShowAddFarm] = useState(false);
+  
+  // Placement Mode State
+  const [isPlacingMode, setIsPlacingMode] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<LocationValidationResult | null>(null);
+  const [placementCoord, setPlacementCoord] = useState<Coordinates | null>(null);
 
   const lastSelectedFarmRef = useRef<Farm | null>(null);
 
@@ -71,13 +80,25 @@ export default function MapScreen() {
 
   const displayFarm = selectedFarm ?? lastSelectedFarmRef.current;
 
+  // Reactively open/close the bottom sheet when selectedFarm changes
+  React.useEffect(() => {
+    if (selectedFarm) {
+      // Small timeout ensures the content is rendered before snapping
+      setTimeout(() => {
+        bottomSheetRef.current?.snapToIndex(0);
+      }, 50);
+    } else {
+      bottomSheetRef.current?.close();
+    }
+  }, [selectedFarm]);
+
   const handlePermissionRequest = async () => {
     await requestPermission();
   };
 
   const handleMarkerPress = (farm: Farm) => {
     selectFarm(farm);
-    bottomSheetRef.current?.snapToIndex(0);
+    // snapToIndex is now handled by the useEffect above
 
     if (mapRef.current) {
       mapRef.current.animateToRegion(
@@ -230,6 +251,15 @@ export default function MapScreen() {
             farms={farms}
             selectedFarm={selectedFarm}
             onMarkerPress={handleMarkerPress}
+            onRegionChangeComplete={async (region) => {
+              if (isPlacingMode) {
+                setPlacementCoord({ latitude: region.latitude, longitude: region.longitude });
+                setValidating(true);
+                const res = await validateFarmLocation(region.latitude, region.longitude);
+                setValidationResult(res);
+                setValidating(false);
+              }
+            }}
           />
         ) : (
           <EmptyState
@@ -249,128 +279,147 @@ export default function MapScreen() {
           </Pressable>
         </View>
 
-        {/* FAB — Add Farm */}
-        <Animated.View style={[styles.fabWrapper, { transform: [{ scale: fabScale }] }]}>
-          <Pressable
-            style={styles.fab}
-            onPress={() => setShowAddFarm(true)}
-            onPressIn={pressFabIn}
-            onPressOut={pressFabOut}
-            accessibilityLabel="Add new farm"
-            accessibilityRole="button"
-          >
-            <LinearGradient
-              colors={['#059669', '#10B981']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.fabGradient}
+        {/* FAB — Add Farm (Hidden in placing mode) */}
+        {!isPlacingMode && (
+          <Animated.View style={[styles.fabWrapper, { transform: [{ scale: fabScale }] }]}>
+            <Pressable
+              style={styles.fab}
+              onPress={() => {
+                setIsPlacingMode(true);
+                setValidationResult(null);
+                setPlacementCoord(location ? { latitude: location.latitude, longitude: location.longitude } : null);
+              }}
+              onPressIn={pressFabIn}
+              onPressOut={pressFabOut}
+              accessibilityLabel="Add new farm"
+              accessibilityRole="button"
             >
-              <Ionicons name="add" size={28} color="#FFFFFF" />
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
+              <LinearGradient
+                colors={['#059669', '#10B981']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.fabGradient}
+              >
+                <Ionicons name="add" size={28} color="#FFFFFF" />
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        )}
+
+        {/* Center Crosshair for Placement Mode */}
+        {isPlacingMode && (
+          <View style={styles.crosshairContainer} pointerEvents="none">
+            <View style={[
+              styles.crosshairGlow, 
+              validationResult?.isValid === true ? { backgroundColor: 'rgba(16, 185, 129, 0.2)' } :
+              validationResult?.isValid === false ? { backgroundColor: 'rgba(239, 68, 68, 0.2)' } :
+              {}
+            ]} />
+            <Ionicons 
+              name="add" 
+              size={40} 
+              color={
+                validating ? colors.textSecondary :
+                validationResult?.isValid === true ? colors.success :
+                validationResult?.isValid === false ? colors.danger :
+                colors.primary
+              } 
+            />
+          </View>
+        )}
+
+        {/* Placement Mode Validation Panel */}
+        {isPlacingMode && (
+          <View style={styles.placementPanel}>
+            <View style={styles.placementHeader}>
+              <Text style={styles.placementTitle}>Select Farm Location</Text>
+              <Pressable onPress={() => setIsPlacingMode(false)} hitSlop={10}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+            <Text style={styles.placementSub}>Drag map to position the pin exactly over your farm.</Text>
+            
+            <View style={[
+              styles.validationBox,
+              validationResult?.isValid === true ? { borderColor: colors.success, backgroundColor: isDark ? `${colors.success}20` : '#ECFDF5' } :
+              validationResult?.isValid === false ? { borderColor: colors.danger, backgroundColor: isDark ? `${colors.danger}20` : '#FEF2F2' } :
+              { borderColor: colors.border, backgroundColor: colors.card }
+            ]}>
+              {validating ? (
+                <View style={styles.validationRow}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={styles.validationText}>Analyzing terrain...</Text>
+                </View>
+              ) : validationResult ? (
+                <View style={styles.validationRow}>
+                  <Ionicons 
+                    name={validationResult.isValid ? "checkmark-circle" : "warning"} 
+                    size={20} 
+                    color={validationResult.isValid ? colors.success : colors.danger} 
+                  />
+                  <Text style={[
+                    styles.validationText,
+                    { color: validationResult.isValid ? (isDark ? colors.success : '#065F46') : (isDark ? colors.danger : '#991B1B') }
+                  ]}>
+                    {validationResult.message}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.validationRow}>
+                  <Ionicons name="move" size={20} color={colors.textSecondary} />
+                  <Text style={styles.validationText}>Move map to analyze area</Text>
+                </View>
+              )}
+            </View>
+
+            <Pressable
+              style={[styles.confirmBtn, (!validationResult?.isValid || validating) && styles.confirmBtnDisabled]}
+              onPress={() => {
+                if (validationResult?.isValid && placementCoord) {
+                  setIsPlacingMode(false);
+                  setShowAddFarm(true);
+                }
+              }}
+              disabled={!validationResult?.isValid || validating}
+            >
+              <Text style={styles.confirmBtnText}>Confirm Placement</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* Bottom Sheet for Farm Details */}
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
-        snapPoints={snapPoints}
+        enableDynamicSizing={true}
         enablePanDownToClose
         onChange={handleSheetChanges}
         backgroundStyle={styles.bottomSheetBackground}
         handleIndicatorStyle={styles.bottomSheetIndicator}
       >
         {displayFarm && (
-          <View style={styles.sheetContent}>
-            <View style={styles.detailsHeader}>
-              <View style={styles.detailsTitleWrap}>
-                <Text style={styles.detailsTitle} numberOfLines={1}>
-                  {displayFarm.name}
-                </Text>
-                {displayFarm.cropType && (
-                  <Text style={styles.cropTypeLabel}>{displayFarm.cropType}</Text>
-                )}
-              </View>
-              <View
-                style={[
-                  styles.healthBadge,
-                  { backgroundColor: getHealthColor(displayFarm.cropHealth) + '20' },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.healthDot,
-                    { backgroundColor: getHealthColor(displayFarm.cropHealth) },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.healthText,
-                    { color: getHealthColor(displayFarm.cropHealth) },
-                  ]}
-                >
-                  {displayFarm.cropHealth.charAt(0).toUpperCase() +
-                    displayFarm.cropHealth.slice(1)}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.detailsAddress}>
-              <Ionicons name="location-outline" size={12} color={colors.textSecondary} />{' '}
-              {displayFarm.address}
-              {displayFarm.distance
-                ? `  ·  ${displayFarm.distance.toFixed(1)} km away`
-                : ''}
-            </Text>
-
-            <View style={styles.detailsGrid}>
-              <View style={styles.detailsItem}>
-                <View style={[styles.detailsIconBg, { backgroundColor: isDark ? `${colors.info}20` : '#EFF6FF' }]}>
-                  <Ionicons name="water" size={20} color={colors.info} />
-                </View>
-                <Text style={styles.detailsValue}>{displayFarm.soilMoisture}%</Text>
-                <Text style={styles.detailsLabel}>{t('map.soilMoisture')}</Text>
-              </View>
-
-              <View style={styles.detailsItem}>
-                <View style={[styles.detailsIconBg, { backgroundColor: isDark ? `${colors.danger}20` : '#FEF2F2' }]}>
-                  <Ionicons name="thermometer" size={20} color={colors.danger} />
-                </View>
-                <Text style={styles.detailsValue}>{displayFarm.temperature}°C</Text>
-                <Text style={styles.detailsLabel}>{t('map.temperature')}</Text>
-              </View>
-
-              <View style={styles.detailsItem}>
-                <View style={[styles.detailsIconBg, { backgroundColor: isDark ? `${colors.success}20` : '#F0FDF4' }]}>
-                  <Ionicons name="partly-sunny" size={20} color={colors.success} />
-                </View>
-                <Text style={styles.detailsValue}>{displayFarm.humidity}%</Text>
-                <Text style={styles.detailsLabel}>Humidity</Text>
-              </View>
-            </View>
-
-            <Pressable
-              style={styles.viewDetailsButton}
-              onPress={() => {
+          <BottomSheetView style={styles.sheetContent}>
+            <QuickAnalysisPanel 
+              farm={displayFarm}
+              onViewDetails={() => {
                 bottomSheetRef.current?.close();
                 router.push(`/farm/${displayFarm.id}`);
               }}
-            >
-              <Text style={styles.viewDetailsText}>View Farm Dashboard</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-            </Pressable>
-          </View>
+            />
+          </BottomSheetView>
         )}
       </BottomSheet>
 
       {/* Add Farm Modal */}
-      <AddFarmModal
-        visible={showAddFarm}
-        onClose={() => setShowAddFarm(false)}
-        userLocation={location}
-        onFarmAdded={handleFarmAdded}
-      />
+      {showAddFarm && (
+        <AddFarmModal
+          visible={showAddFarm}
+          onClose={() => setShowAddFarm(false)}
+          userLocation={placementCoord || location}
+          onFarmAdded={handleFarmAdded}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -483,79 +532,9 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
     backgroundColor: colors.border,
     borderRadius: 2,
   },
-  sheetContent: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 16 },
-  detailsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+  sheetContent: {
+    paddingBottom: 16,
   },
-  detailsTitleWrap: { flex: 1, marginRight: 12 },
-  detailsTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  cropTypeLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  healthBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  healthDot: { width: 7, height: 7, borderRadius: 4 },
-  healthText: { fontSize: 12, fontWeight: '700' },
-  detailsAddress: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginBottom: 16,
-  },
-  detailsGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-  detailsItem: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: colors.background,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 4,
-  },
-  detailsIconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  detailsLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
-  detailsValue: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-  },
-  viewDetailsButton: {
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
-    borderRadius: 14,
-    gap: 8,
-  },
-  viewDetailsText: { color: colors.textInverse || '#FFFFFF', fontSize: 15, fontWeight: '700' },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -595,4 +574,83 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
     marginTop: 8,
   },
   permissionButtonText: { fontSize: 16, fontWeight: '700', color: colors.textInverse || '#FFFFFF' },
+
+  /* Placement Mode */
+  crosshairContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    paddingBottom: 24, // Slight offset to account for bottom sheet visual center
+  },
+  crosshairGlow: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  placementPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 32,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 20,
+    zIndex: 100,
+  },
+  placementHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  placementTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  placementSub: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 16,
+  },
+  validationBox: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  validationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  validationText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  confirmBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  confirmBtnDisabled: {
+    backgroundColor: colors.border,
+  },
+  confirmBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

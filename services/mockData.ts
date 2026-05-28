@@ -1,6 +1,6 @@
-// services/mockData.ts
 import { Farm, CropHealthStatus, Coordinates } from '../types/farm';
 import { Insight, WeatherData, SoilAnalysis, CropSuggestion } from '../types/insight';
+import { validateLocationSync } from './locationValidator';
 
 /**
  * Generate random number within range
@@ -71,18 +71,39 @@ export const generateNearbyFarms = (
   ];
 
   for (let i = 0; i < count; i++) {
-    // Generate location within ~50km radius
-    const angle = randomInRange(0, 360);
-    const distance = randomInRange(1, 50);
+    let farmLocation: Coordinates | null = null;
+    let distance = 0;
     
-    const latOffset = (distance / 111) * Math.cos(angle * Math.PI / 180);
-    const lonOffset = (distance / (111 * Math.cos(userLocation.latitude * Math.PI / 180))) * 
-                      Math.sin(angle * Math.PI / 180);
+    // Try up to 50 times to find a valid location
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const angle = randomInRange(0, 360);
+      const tempDist = randomInRange(1, 50);
+      
+      const latOffset = (tempDist / 111) * Math.cos(angle * Math.PI / 180);
+      const lonOffset = (tempDist / (111 * Math.cos(userLocation.latitude * Math.PI / 180))) * 
+                        Math.sin(angle * Math.PI / 180);
+  
+      const testLocation = {
+        latitude: userLocation.latitude + latOffset,
+        longitude: userLocation.longitude + lonOffset,
+      };
 
-    const farmLocation: Coordinates = {
-      latitude: userLocation.latitude + latOffset,
-      longitude: userLocation.longitude + lonOffset,
-    };
+      const validation = validateLocationSync(testLocation.latitude, testLocation.longitude);
+      if (validation.isValid) {
+        farmLocation = testLocation;
+        distance = tempDist;
+        break;
+      }
+    }
+
+    // Fallback if we somehow fail 50 times (unlikely, but just in case)
+    if (!farmLocation) {
+      farmLocation = {
+        latitude: userLocation.latitude + (randomInRange(20, 50) / 111),
+        longitude: userLocation.longitude + (randomInRange(20, 50) / 111),
+      };
+      distance = calculateDistance(userLocation, farmLocation);
+    }
 
     // Generate realistic environmental data based on location
     const baseTemp = 25; // Base temperature in Celsius

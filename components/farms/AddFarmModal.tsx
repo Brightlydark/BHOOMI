@@ -31,7 +31,7 @@ import { Farm, Coordinates, CropHealthStatus } from '../../types/farm';
 import { useFarmStore } from '../../store/farmStore';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { ColorPalette } from '../../theme/colors';
-import { generateFarmInsights } from '../../services/mockData';
+import { generateFarmInsights, calculateDistance } from '../../services/mockData';
 import { saveInsightsForFarm } from '../../services/insightStore';
 
 const { height: SCREEN_H } = Dimensions.get('window');
@@ -47,7 +47,7 @@ interface AddFarmModalProps {
   onFarmAdded?: (farm: Farm) => void;
 }
 
-type Step = 'details' | 'location' | 'soil' | 'success';
+type Step = 'details' | 'soil' | 'success';
 
 const CROP_TYPES = [
   'Rice', 'Wheat', 'Cotton', 'Sugarcane',
@@ -90,10 +90,15 @@ const buildFarm = (
   const pinLat = formData.pinLat ?? userLocation?.latitude ?? 12.9716;
   const pinLon = formData.pinLon ?? userLocation?.longitude ?? 77.5946;
 
+  const farmLocation = { latitude: pinLat, longitude: pinLon };
+  const distance = userLocation 
+    ? calculateDistance(userLocation, farmLocation)
+    : 0;
+
   return {
     id: `user_farm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     name: formData.name.trim(),
-    location: { latitude: pinLat, longitude: pinLon },
+    location: farmLocation,
     address: formData.address?.trim() || `${formData.name.trim()}, India`,
     soilMoisture: moisture,
     temperature,
@@ -101,7 +106,7 @@ const buildFarm = (
     cropHealth,
     cropType: formData.cropType || undefined,
     lastUpdated: new Date(),
-    distance: 0,
+    distance,
   };
 };
 
@@ -499,12 +504,11 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
   );
 
   /* -------- STEP HEADER -------- */
-  const STEPS: Step[] = ['details', 'location', 'soil'];
+  const STEPS: Step[] = ['details', 'soil'];
   const stepIndex = STEPS.indexOf(step);
 
   const stepTitles: Record<Step, string> = {
     details: 'Farm Details',
-    location: 'Farm Location',
     soil: 'Soil & Irrigation',
     success: 'Farm Added!',
   };
@@ -561,7 +565,6 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
             showsVerticalScrollIndicator={false}
           >
             {step === 'details' && renderDetails()}
-            {step === 'location' && renderLocation()}
             {step === 'soil' && renderSoil()}
             {step === 'success' && renderSuccess()}
           </ScrollView>

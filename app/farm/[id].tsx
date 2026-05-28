@@ -1,8 +1,11 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Droplets, Thermometer, Sprout, ShieldAlert, CheckCircle2, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Droplets, Thermometer, Sprout, ShieldAlert, CheckCircle2, ChevronRight, Trash2 } from 'lucide-react-native';
+
+import { useFarmStore } from '../../store/farmStore';
+import { removeInsightsForFarm } from '../../services/insightStore';
 
 import { useFarms } from '../../hooks/useFarms';
 import { useLocation } from '../../hooks/useLocation';
@@ -20,6 +23,7 @@ export default function FarmDetailScreen() {
   
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { removeFarm } = useFarmStore();
 
   const farm = useMemo(() => farms.find(f => f.id === id), [id, farms]);
 
@@ -51,6 +55,26 @@ export default function FarmDetailScreen() {
     return colors.danger;
   };
 
+  const handleDelete = () => {
+    if (!farm) return;
+    Alert.alert(
+      "Remove Farm",
+      "Are you sure you want to remove this farm? All associated analytics and insights will be deleted.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            removeFarm(farm.id);
+            await removeInsightsForFarm(farm.id);
+            router.replace('/(tabs)/map');
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
@@ -58,7 +82,9 @@ export default function FarmDetailScreen() {
           <ArrowLeft color={colors.text} size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{farm.name}</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity style={styles.iconButton} onPress={handleDelete}>
+          <Trash2 color={colors.danger} size={22} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -69,26 +95,26 @@ export default function FarmDetailScreen() {
             <View style={[styles.iconCircle, { backgroundColor: isDark ? `${colors.info}20` : '#DBEAFE' }]}>
               <Droplets color={colors.info} size={20} />
             </View>
-            <Text style={styles.statValue}>{farm.soilMoisture}%</Text>
-            <Text style={styles.statLabel}>Moisture</Text>
+            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{farm.soilMoisture}%</Text>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Moisture</Text>
           </View>
           
           <View style={styles.statBox}>
             <View style={[styles.iconCircle, { backgroundColor: isDark ? `${colors.danger}20` : '#FEE2E2' }]}>
               <Thermometer color={colors.danger} size={20} />
             </View>
-            <Text style={styles.statValue}>{farm.temperature}°C</Text>
-            <Text style={styles.statLabel}>Temperature</Text>
+            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{farm.temperature}°C</Text>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Temperature</Text>
           </View>
 
           <View style={styles.statBox}>
             <View style={[styles.iconCircle, { backgroundColor: isDark ? `${getHealthColor(farm.cropHealth)}20` : '#ECFDF5' }]}>
               <Sprout color={getHealthColor(farm.cropHealth)} size={20} />
             </View>
-            <Text style={[styles.statValue, { color: getHealthColor(farm.cropHealth) }]}>
+            <Text style={[styles.statValue, { color: getHealthColor(farm.cropHealth) }]} numberOfLines={1} adjustsFontSizeToFit>
               {farm.cropHealth.toUpperCase()}
             </Text>
-            <Text style={styles.statLabel}>Crop Health</Text>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>Health</Text>
           </View>
         </View>
 
@@ -96,9 +122,9 @@ export default function FarmDetailScreen() {
         <Card style={styles.infoCard}>
           <Text style={styles.infoTitle}>Location Details</Text>
           <Text style={styles.infoText}>{farm.address}</Text>
-          {farm.distance && (
+          {farm.distance !== undefined && farm.distance !== null ? (
             <Text style={styles.distanceText}>📍 {farm.distance.toFixed(2)} km away</Text>
-          )}
+          ) : null}
         </Card>
 
         {/* Weather Forecast */}
@@ -217,7 +243,7 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
   statBox: {
     backgroundColor: colors.card,
     flex: 1,
-    padding: 16,
+    padding: 12,
     borderRadius: 16,
     alignItems: 'center',
     marginHorizontal: 4,
@@ -239,11 +265,13 @@ const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.creat
     fontSize: 16,
     fontWeight: '700',
     color: colors.text,
+    textAlign: 'center',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
     marginTop: 4,
+    textAlign: 'center',
   },
   infoCard: {
     marginBottom: 8,

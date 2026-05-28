@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Farm, Coordinates } from '../types/farm';
 import { fetchNearbyFarms } from '../services/farmService';
 import { useFarmStore } from '../store/farmStore';
+import { calculateDistance } from '../services/mockData';
 
 interface UseFarmsReturn {
   farms: Farm[];
@@ -33,7 +34,6 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
     try {
       const result = await fetchNearbyFarms(userLocation);
       setFarms(result);          // merges with userFarms inside store
-      setDisplayedFarms(useFarmStore.getState().farms);
     } catch (err) {
       setError('Failed to load farms');
     } finally {
@@ -44,8 +44,16 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
 
   // Keep displayedFarms in sync when store changes (e.g. after addFarm)
   useEffect(() => {
-    setDisplayedFarms(farms);
-  }, [farms]);
+    if (userLocation) {
+      const updated = farms.map(f => ({
+        ...f,
+        distance: calculateDistance(userLocation, f.location)
+      })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      setDisplayedFarms(updated);
+    } else {
+      setDisplayedFarms(farms);
+    }
+  }, [farms, lat, lon]);
 
   const searchFarms = useCallback(
     (query: string) => {
@@ -60,9 +68,16 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
           f.address.toLowerCase().includes(lower) ||
           f.cropType?.toLowerCase().includes(lower)
       );
-      setDisplayedFarms(filtered);
+      if (userLocation) {
+        setDisplayedFarms(
+          filtered.map(f => ({ ...f, distance: calculateDistance(userLocation, f.location) }))
+                  .sort((a, b) => (a.distance || 0) - (b.distance || 0))
+        );
+      } else {
+        setDisplayedFarms(filtered);
+      }
     },
-    [farms]
+    [farms, lat, lon]
   );
 
   const refreshFarms = useCallback(async () => {
@@ -72,7 +87,6 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
     try {
       const result = await fetchNearbyFarms(userLocation, false);
       setFarms(result);
-      setDisplayedFarms(useFarmStore.getState().farms);
     } catch (err) {
       setError('Refresh failed');
     } finally {

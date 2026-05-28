@@ -33,30 +33,41 @@ export const MetricChart: React.FC<MetricChartProps> = ({
           height={160}
           thickness={3}
           color={color}
-          startFillColor={`${color}50`}
-          endFillColor={`${color}00`}
-          startOpacity={0.9}
-          endOpacity={0.2}
-          initialSpacing={10}
+          areaChart
+          curved
+          isAnimated
+          animationDuration={1000}
+          startFillColor={color}
+          endFillColor={color}
+          startOpacity={0.25}
+          endOpacity={0.05}
+          initialSpacing={15}
+          spacing={(width - 110) / Math.max(1, data.length - 1)}
           noOfSections={4}
           yAxisTextStyle={styles.axisText}
           xAxisLabelTextStyle={styles.axisText}
           hideRules
           hideYAxisText={false}
           yAxisLabelSuffix={suffix}
+          dataPointsRadius={4}
+          dataPointsColor={color}
+          focusEnabled
+          showStripOnFocus
+          showTextOnFocus
           pointerConfig={{
             pointerStripHeight: 140,
-            pointerStripColor: isDark ? colors.border : 'lightgray',
+            pointerStripColor: color,
             pointerStripWidth: 2,
-            pointerColor: isDark ? colors.border : 'lightgray',
+            pointerColor: colors.card,
             radius: 6,
             pointerLabelWidth: 80,
             pointerLabelHeight: 30,
             activatePointersOnLongPress: false,
-            autoAdjustPointerLabelPosition: false,
+            autoAdjustPointerLabelPosition: true,
             pointerLabelComponent: (items: any) => {
+              if (!items || !items[0]) return null;
               return (
-                <View style={styles.tooltip}>
+                <View style={[styles.tooltip, { backgroundColor: color }]}>
                   <Text style={styles.tooltipText}>{items[0].value}{suffix}</Text>
                 </View>
               );
@@ -88,21 +99,28 @@ const createStyles = (colors: ColorPalette) => StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
-    marginLeft: -10,
+    marginLeft: -15,
   },
   axisText: {
     color: colors.textMuted,
     fontSize: 10,
   },
   tooltip: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: colors.text,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -20,
   },
   tooltipText: {
-    color: colors.textInverse || colors.background,
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

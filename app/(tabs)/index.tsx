@@ -40,7 +40,7 @@ import {
   FarmComparisonChart 
 } from '../../components/analytics/AnalyticsCharts';
 import { AIPredictionCard } from '../../components/analytics/AIPredictionCard';
-
+import { HomeHeader } from '../../components/home/HomeHeader';
 // Health status styling
 const healthColors: Record<CropHealthStatus, { bg: string; text: string; icon: string }> = {
   good: { bg: '#ECFDF5', text: '#059669', icon: '🌿' },
@@ -91,12 +91,7 @@ export default function HomeScreen() {
   const comparisonInfo = useMemo(() => !selectedFarm ? generateFarmComparison(farms) : { data: [] }, [farms, selectedFarm]);
   const aiPrediction = useMemo(() => generateAIPrediction(selectedFarm), [selectedFarm, avgMoisture, avgTemp]);
 
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t('home.goodMorning');
-    if (hour < 17) return t('home.goodAfternoon');
-    return t('home.goodEvening');
-  };
+
 
   const isLoading = farmsLoading || insightsLoading;
 
@@ -113,25 +108,12 @@ export default function HomeScreen() {
         }
       >
         {/* Greeting Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{greeting()}</Text>
-            <Text style={styles.userName}>
-              {user?.name ?? t('home.farmer')} 👋
-            </Text>
-          </View>
-          <Pressable
-            style={styles.notifBtn}
-            onPress={() => router.push('/(tabs)/profile')}
-          >
-            {criticalCount > 0 && (
-              <View style={styles.notifDot}>
-                <Text style={styles.notifDotText}>{criticalCount}</Text>
-              </View>
-            )}
-            <Ionicons name="notifications-outline" size={24} color={colors.text} />
-          </Pressable>
-        </View>
+        <HomeHeader
+          userName={user?.name ?? t('home.farmer')}
+          criticalCount={criticalCount}
+          avgTemp={avgTemp}
+          isStable={(healthCounts.poor ?? 0) === 0 && (healthCounts.moderate ?? 0) === 0}
+        />
 
         {/* Farm Selector */}
         {!isLoading && farms.length > 1 && (
@@ -387,32 +369,6 @@ function QuickActionCard({ icon, iconColor, label, onPress }: QuickActionProps) 
 
 const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  greeting: { fontSize: 14, color: colors.textSecondary },
-  userName: { fontSize: 22, fontWeight: '700', color: colors.text },
-  notifBtn: { position: 'relative', padding: 4 },
-  notifDot: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.danger,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  notifDotText: { fontSize: 10, fontWeight: '700', color: '#FFFFFF' },
   farmSelectorScroll: {
     backgroundColor: colors.background,
     maxHeight: 56,

@@ -15,6 +15,7 @@ interface MapViewWrapperProps {
   farms: Farm[];
   selectedFarm: Farm | null;
   onMarkerPress: (farm: Farm) => void;
+  onRegionChangeComplete?: (region: Region) => void;
 }
 
 export const MapViewWrapper = forwardRef<MapView, MapViewWrapperProps>((props, ref) => {
