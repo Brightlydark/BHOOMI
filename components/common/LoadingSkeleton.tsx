@@ -1,6 +1,9 @@
 // components/common/LoadingSkeleton.tsx
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, ViewStyle } from 'react-native';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface LoadingSkeletonProps {
   width?: any;
@@ -45,6 +48,9 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
     outputRange: [0.3, 0.7],
   });
 
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const renderSingleSkeleton = (key: number) => (
     <Animated.View
       key={key}
@@ -55,6 +61,7 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
           height,
           borderRadius,
           opacity,
+          backgroundColor: isDark ? colors.border : '#E0E0E0',
         },
         style,
       ]}
@@ -77,6 +84,8 @@ interface CardSkeletonProps {
 }
 
 export const CardSkeleton: React.FC<CardSkeletonProps> = ({ count = 1 }) => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
@@ -90,16 +99,16 @@ export const CardSkeleton: React.FC<CardSkeletonProps> = ({ count = 1 }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) => StyleSheet.create({
   skeleton: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.border,
   },
   cardSkeleton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

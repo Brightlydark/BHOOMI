@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface MetricChartProps {
   data: { value: number; label: string }[];
@@ -17,6 +20,9 @@ export const MetricChart: React.FC<MetricChartProps> = ({
   title,
   suffix = ''
 }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -40,9 +46,9 @@ export const MetricChart: React.FC<MetricChartProps> = ({
           yAxisLabelSuffix={suffix}
           pointerConfig={{
             pointerStripHeight: 140,
-            pointerStripColor: 'lightgray',
+            pointerStripColor: isDark ? colors.border : 'lightgray',
             pointerStripWidth: 2,
-            pointerColor: 'lightgray',
+            pointerColor: isDark ? colors.border : 'lightgray',
             radius: 6,
             pointerLabelWidth: 80,
             pointerLabelHeight: 30,
@@ -62,13 +68,13 @@ export const MetricChart: React.FC<MetricChartProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) => StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -77,7 +83,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
+    color: colors.text,
     marginBottom: 16,
   },
   chartContainer: {
@@ -85,17 +91,17 @@ const styles = StyleSheet.create({
     marginLeft: -10,
   },
   axisText: {
-    color: '#9CA3AF',
+    color: colors.textMuted,
     fontSize: 10,
   },
   tooltip: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: '#111827',
+    backgroundColor: colors.text,
   },
   tooltipText: {
-    color: '#FFFFFF',
+    color: colors.textInverse || colors.background,
     fontSize: 12,
     fontWeight: '600',
   },

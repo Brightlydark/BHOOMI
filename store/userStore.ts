@@ -15,6 +15,7 @@ interface UserState {
   login: (phone: string) => void;
   completeSetup: (name: string) => void;
   setPreferences: (preferences: Partial<UserPreferences>) => void;
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setLanguage: (language: 'en' | 'hi' | 'kn') => void;
   setNotificationSettings: (settings: Partial<NotificationSettings>) => void;
   setOnboarded: (onboarded: boolean) => void;
@@ -23,6 +24,7 @@ interface UserState {
 
 const defaultPreferences: UserPreferences = {
   language: 'en',
+  theme: 'system',
   notifications: {
     push: true,
     email: true,
@@ -75,6 +77,14 @@ export const useUserStore = create<UserState>()(
           preferences: { ...state.preferences, ...newPreferences },
         })),
 
+      setTheme: (theme) =>
+        set((state) => ({
+          preferences: {
+            ...state.preferences,
+            theme,
+          },
+        })),
+
       setLanguage: (language) =>
         set((state) => ({
           preferences: {
@@ -103,7 +113,7 @@ export const useUserStore = create<UserState>()(
         }),
     }),
     {
-      name: 'smart-agriculture-user-storage',
+      name: 'bhoomi-user-storage',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface ChartCardProps {
   title: string;
@@ -19,9 +22,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   trendDirection,
   children 
 }) => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const trendColor = 
-    trendDirection === 'up' ? '#10B981' : 
-    trendDirection === 'down' ? '#EF4444' : '#6B7280';
+    trendDirection === 'up' ? colors.success : 
+    trendDirection === 'down' ? colors.danger : colors.textMuted;
     
   const trendIcon = 
     trendDirection === 'up' ? 'arrow-up-outline' : 
@@ -50,14 +56,15 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+// ── Styles ─────────────────────────────────────────────────────
+const createStyles = (colors: ColorPalette) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 24,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 16,
-    shadowColor: '#8C92AC',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -84,7 +91,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
   },
   trendBadge: {
     flexDirection: 'row',

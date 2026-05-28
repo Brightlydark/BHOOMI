@@ -21,6 +21,8 @@ import { useInsights } from '../../hooks/useInsights';
 import { useUserStore } from '../../store/userStore';
 import { CropHealthStatus } from '../../types/farm';
 import { useState, useMemo } from 'react';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
 
 import { 
   generateMoistureTrends, 
@@ -54,6 +56,9 @@ export default function HomeScreen() {
   const { insights, loading: insightsLoading, criticalCount } = useInsights(farms);
   const [refreshing, setRefreshing] = useState(false);
   const [timeframe, setTimeframe] = useState<7 | 30 | 90>(7);
+
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -103,7 +108,7 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#10B981"
+            tintColor={colors.primary}
           />
         }
       >
@@ -124,7 +129,7 @@ export default function HomeScreen() {
                 <Text style={styles.notifDotText}>{criticalCount}</Text>
               </View>
             )}
-            <Ionicons name="notifications-outline" size={24} color="#111827" />
+            <Ionicons name="notifications-outline" size={24} color={colors.text} />
           </Pressable>
         </View>
 
@@ -286,28 +291,28 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
           <View style={styles.actionsGrid}>
-            <QuickAction
+            <QuickActionCard
               icon="map"
               label={t('home.actionMap')}
-              color="#10B981"
+              iconColor="#10B981"
               onPress={() => router.push('/(tabs)/map')}
             />
-            <QuickAction
+            <QuickActionCard
               icon="bulb"
               label={t('home.actionInsights')}
-              color="#F59E0B"
+              iconColor="#F59E0B"
               onPress={() => router.push('/(tabs)/insights')}
             />
-            <QuickAction
+            <QuickActionCard
               icon="cloud"
               label={t('home.actionWeather')}
-              color="#3B82F6"
+              iconColor="#3B82F6"
               onPress={() => {}}
             />
-            <QuickAction
+            <QuickActionCard
               icon="person"
               label={t('home.actionProfile')}
-              color="#8B5CF6"
+              iconColor="#8B5CF6"
               onPress={() => router.push('/(tabs)/profile')}
             />
           </View>
@@ -320,6 +325,7 @@ export default function HomeScreen() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────
+
 function StatPill({
   icon,
   iconColor,
@@ -331,9 +337,11 @@ function StatPill({
   label: string;
   value: string;
 }) {
+  const { colors } = useAppTheme();
+  const statStyles = useMemo(() => createStatStyles(colors), [colors]);
   return (
     <View style={statStyles.pill}>
-      <Ionicons name={icon as any} size={18} color={iconColor} />
+      <Ionicons name={icon as any} size={22} color={iconColor} />
       <Text style={statStyles.value}>{value}</Text>
       <Text style={statStyles.label}>{label}</Text>
     </View>
@@ -341,34 +349,34 @@ function StatPill({
 }
 
 function SectionTitle({ title, onMore }: { title: string; onMore?: () => void }) {
-  const { t } = useTranslation();
+  const { colors } = useAppTheme();
+  const sectionTitleStyles = useMemo(() => createSectionTitleStyles(colors), [colors]);
   return (
     <View style={sectionTitleStyles.row}>
       <Text style={sectionTitleStyles.text}>{title}</Text>
       {onMore && (
         <Pressable onPress={onMore}>
-          <Text style={sectionTitleStyles.more}>{t('common.seeAll')}</Text>
+          <Text style={sectionTitleStyles.more}>See all</Text>
         </Pressable>
       )}
     </View>
   );
 }
 
-function QuickAction({
-  icon,
-  label,
-  color,
-  onPress,
-}: {
+interface QuickActionProps {
   icon: string;
   label: string;
-  color: string;
+  iconColor: string;
   onPress: () => void;
-}) {
+}
+
+function QuickActionCard({ icon, iconColor, label, onPress }: QuickActionProps) {
+  const { colors } = useAppTheme();
+  const actionStyles = useMemo(() => createActionStyles(colors), [colors]);
   return (
     <Pressable style={actionStyles.card} onPress={onPress}>
-      <View style={[actionStyles.iconBg, { backgroundColor: `${color}20` }]}>
-        <Ionicons name={icon as any} size={26} color={color} />
+      <View style={[actionStyles.iconBg, { backgroundColor: `${iconColor}15` }]}>
+        <Ionicons name={icon as any} size={24} color={iconColor} />
       </View>
       <Text style={actionStyles.label}>{label}</Text>
     </Pressable>
@@ -376,21 +384,21 @@ function QuickAction({
 }
 
 // ── Styles ─────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: colors.border,
   },
-  greeting: { fontSize: 14, color: '#6B7280' },
-  userName: { fontSize: 22, fontWeight: '700', color: '#111827' },
+  greeting: { fontSize: 14, color: colors.textSecondary },
+  userName: { fontSize: 22, fontWeight: '700', color: colors.text },
   notifBtn: { position: 'relative', padding: 4 },
   notifDot: {
     position: 'absolute',
@@ -399,14 +407,14 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
   },
   notifDotText: { fontSize: 10, fontWeight: '700', color: '#FFFFFF' },
   farmSelectorScroll: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
     maxHeight: 56,
   },
   farmSelectorContainer: {
@@ -419,36 +427,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     maxWidth: 200,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   farmTabActive: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
+    backgroundColor: isDark ? `${colors.primary}20` : colors.successLight,
+    borderColor: colors.primary,
   },
   farmTabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
+    color: colors.textSecondary,
   },
   farmTabTextActive: {
-    color: '#059669',
+    color: colors.success,
   },
   statsBanner: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#8C92AC',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
@@ -456,7 +464,7 @@ const styles = StyleSheet.create({
   },
   timeframeContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.surfaceActive,
     borderRadius: 16,
     padding: 4,
     marginHorizontal: 16,
@@ -469,8 +477,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   timeframeBtnActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: colors.card,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -479,15 +487,15 @@ const styles = StyleSheet.create({
   timeframeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   timeframeTextActive: {
-    color: '#111827',
+    color: colors.text,
   },
-  statDivider: { width: 1, backgroundColor: '#E5E7EB', marginVertical: 4 },
+  statDivider: { width: 1, backgroundColor: colors.border, marginVertical: 4 },
   sectionPad: { paddingHorizontal: 16, paddingTop: 16 },
   section: { paddingHorizontal: 16, paddingTop: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
   healthRow: { flexDirection: 'row', gap: 10 },
   healthCard: {
     flex: 1,
@@ -502,10 +510,10 @@ const styles = StyleSheet.create({
   emptyInsights: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
   },
-  emptyText: { color: '#9CA3AF', fontSize: 14 },
+  emptyText: { color: colors.textMuted, fontSize: 14 },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -513,32 +521,32 @@ const styles = StyleSheet.create({
   },
 });
 
-const statStyles = StyleSheet.create({
+const createStatStyles = (colors: ColorPalette) => StyleSheet.create({
   pill: { flex: 1, alignItems: 'center', gap: 4 },
-  value: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  label: { fontSize: 11, color: '#6B7280' },
+  value: { fontSize: 18, fontWeight: '700', color: colors.text },
+  label: { fontSize: 11, color: colors.textSecondary },
 });
 
-const sectionTitleStyles = StyleSheet.create({
+const createSectionTitleStyles = (colors: ColorPalette) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  text: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  more: { fontSize: 13, color: '#10B981', fontWeight: '600' },
+  text: { fontSize: 16, fontWeight: '700', color: colors.text },
+  more: { fontSize: 13, color: colors.primary, fontWeight: '600' },
 });
 
-const actionStyles = StyleSheet.create({
+const createActionStyles = (colors: ColorPalette) => StyleSheet.create({
   card: {
     width: '46%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     gap: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07,
     shadowRadius: 4,
@@ -551,5 +559,5 @@ const actionStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  label: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
 });

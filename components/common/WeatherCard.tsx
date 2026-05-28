@@ -1,8 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { CloudRain, Sun, Wind, Droplets } from 'lucide-react-native';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 export const WeatherCard = () => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -41,13 +47,13 @@ export const WeatherCard = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) => StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -62,11 +68,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
+    color: colors.text,
   },
   subtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   mainRow: {
     flexDirection: 'row',
@@ -81,18 +87,18 @@ const styles = StyleSheet.create({
   temperature: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
     marginLeft: 12,
   },
   condition: {
     flex: 1,
     fontSize: 14,
-    color: '#4B5563',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 12,
     justifyContent: 'space-between',
@@ -103,18 +109,18 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
     marginHorizontal: 8,
   },
   statLabel: {
     fontSize: 10,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 6,
     marginBottom: 2,
   },
   statValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
   },
 });

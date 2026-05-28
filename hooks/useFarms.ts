@@ -1,7 +1,7 @@
 // hooks/useFarms.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Farm, Coordinates } from '../types/farm';
-import { fetchNearbyFarms, searchFarms as searchFarmsService } from '../services/farmService';
+import { fetchNearbyFarms } from '../services/farmService';
 import { useFarmStore } from '../store/farmStore';
 
 interface UseFarmsReturn {
@@ -12,17 +12,15 @@ interface UseFarmsReturn {
   refreshFarms: () => Promise<void>;
   searchFarms: (query: string) => void;
   selectFarm: (farm: Farm | null) => void;
+  addFarm: (farm: Farm) => void;
 }
 
 export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
-  const { farms, selectedFarm, setFarms, selectFarm } = useFarmStore();
+  const { farms, selectedFarm, setFarms, selectFarm, addFarm } = useFarmStore();
   const [displayedFarms, setDisplayedFarms] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Fetch farms from service (API → cache → mock)
-   */
   const lat = userLocation?.latitude ?? null;
   const lon = userLocation?.longitude ?? null;
 
@@ -34,8 +32,8 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
 
     try {
       const result = await fetchNearbyFarms(userLocation);
-      setFarms(result);
-      setDisplayedFarms(result);
+      setFarms(result);          // merges with userFarms inside store
+      setDisplayedFarms(useFarmStore.getState().farms);
     } catch (err) {
       setError('Failed to load farms');
     } finally {
@@ -44,9 +42,11 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lon, setFarms]);
 
-  /**
-   * Filter farms locally by search query
-   */
+  // Keep displayedFarms in sync when store changes (e.g. after addFarm)
+  useEffect(() => {
+    setDisplayedFarms(farms);
+  }, [farms]);
+
   const searchFarms = useCallback(
     (query: string) => {
       if (!query.trim()) {
@@ -65,17 +65,14 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
     [farms]
   );
 
-  /**
-   * Force refresh (bypass cache)
-   */
   const refreshFarms = useCallback(async () => {
     if (!userLocation) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await fetchNearbyFarms(userLocation, false); // skip cache
+      const result = await fetchNearbyFarms(userLocation, false);
       setFarms(result);
-      setDisplayedFarms(result);
+      setDisplayedFarms(useFarmStore.getState().farms);
     } catch (err) {
       setError('Refresh failed');
     } finally {
@@ -97,5 +94,6 @@ export const useFarms = (userLocation: Coordinates | null): UseFarmsReturn => {
     refreshFarms,
     searchFarms,
     selectFarm,
+    addFarm,
   };
 };

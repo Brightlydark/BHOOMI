@@ -1,6 +1,9 @@
 // components/common/Card.tsx
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle, Pressable } from 'react-native';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface CardProps {
   children?: React.ReactNode;
@@ -15,6 +18,9 @@ export const Card: React.FC<CardProps> = ({
   onPress,
   elevated = true,
 }) => {
+  const { colors } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const Component = onPress ? Pressable : View;
 
   return (
@@ -31,14 +37,14 @@ export const Card: React.FC<CardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
   },
   elevated: {
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,

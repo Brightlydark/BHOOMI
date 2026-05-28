@@ -1,5 +1,5 @@
 // app/(tabs)/profile.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import i18n from '../../i18n/i18n.config';
 
 import { LanguageSwitcher } from '../../components/settings/LanguageSwitcher';
 import { useUserStore } from '../../store/userStore';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
 import { clearAuthToken } from '../../services/api';
 import { clearCache } from '../../services/farmService';
 import { useLocation } from '../../hooks/useLocation';
@@ -33,7 +35,7 @@ const FAQ_ITEMS = [
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { user, preferences, setLanguage, setNotificationSettings, logout, updateUser } =
+  const { user, preferences, setLanguage, setNotificationSettings, logout, updateUser, setTheme } =
     useUserStore();
 
   const { location, hasPermission, requestPermission, loading: locationLoading } =
@@ -41,8 +43,12 @@ export default function ProfileScreen() {
 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
   const [locationResolving, setLocationResolving] = useState(false);
+
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   // Reverse geocode device location and cache it in the user profile
   useEffect(() => {
@@ -127,7 +133,7 @@ export default function ProfileScreen() {
    * Contact support
    */
   const handleContactSupport = async () => {
-    const url = 'mailto:support@smartagri.app?subject=Support%20Request';
+    const url = 'mailto:support@bhoomi.app?subject=Support%20Request';
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
@@ -142,8 +148,14 @@ export default function ProfileScreen() {
 
   const langLabels: Record<string, string> = {
     en: 'English',
-    hi: 'हिंदी',
-    kn: 'ಕನ್ನಡ',
+    hi: 'हिंदी (Hindi)',
+    kn: 'ಕನ್ನಡ (Kannada)',
+  };
+
+  const themeLabels: Record<string, string> = {
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
   };
 
   return (
@@ -203,7 +215,7 @@ export default function ProfileScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.bannerTitle}>Enable Location Access</Text>
               <Text style={styles.bannerDesc}>
-                Allow Smart Agriculture to use your location for personalised farm insights.
+                Allow BHOOMI to use your location for personalised farm insights.
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#3B82F6" />
@@ -212,6 +224,16 @@ export default function ProfileScreen() {
 
         {/* Settings Section */}
         <SectionHeader title={t('profile.settingsTitle')} />
+
+        {/* Theme Switcher Row */}
+        <SettingsRow
+          icon="color-palette"
+          iconColor="#10B981"
+          label="Appearance Theme"
+          value={themeLabels[preferences.theme || 'system']}
+          onPress={() => setShowThemePicker(true)}
+          showChevron
+        />
 
         {/* Language Switcher Row */}
         <SettingsRow
@@ -289,7 +311,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.versionInfo}>
-          <Text style={styles.versionText}>Smart Agriculture v1.0.0</Text>
+          <Text style={styles.versionText}>BHOOMI v1.0.0</Text>
         </View>
       </ScrollView>
 
@@ -301,6 +323,46 @@ export default function ProfileScreen() {
           onClose={() => setShowLanguagePicker(false)}
         />
       )}
+
+      {/* Theme Picker Modal */}
+      {showThemePicker && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Theme</Text>
+            {(Object.keys(themeLabels) as Array<keyof typeof themeLabels>).map((key) => (
+              <Pressable
+                key={key}
+                style={[
+                  styles.modalOption,
+                  preferences.theme === key && styles.modalOptionActive,
+                ]}
+                onPress={() => {
+                  setTheme(key as 'light' | 'dark' | 'system');
+                  setShowThemePicker(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    preferences.theme === key && styles.modalOptionTextActive,
+                  ]}
+                >
+                  {themeLabels[key]}
+                </Text>
+                {preferences.theme === key && (
+                  <Ionicons name="checkmark" size={20} color="#10B981" />
+                )}
+              </Pressable>
+            ))}
+            <Pressable
+              style={styles.modalCancel}
+              onPress={() => setShowThemePicker(false)}
+            >
+              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -308,6 +370,8 @@ export default function ProfileScreen() {
 // ── Sub-components ─────────────────────────────────────────────
 
 function SectionHeader({ title }: { title: string }) {
+  const { colors } = useAppTheme();
+  const sectionStyles = useMemo(() => createSectionStyles(colors), [colors]);
   return (
     <View style={sectionStyles.container}>
       <Text style={sectionStyles.text}>{title}</Text>
@@ -324,6 +388,8 @@ interface SettingsRowProps {
   showChevron?: boolean;
 }
 function SettingsRow({ icon, iconColor, label, value, onPress, showChevron }: SettingsRowProps) {
+  const { colors } = useAppTheme();
+  const rowStyles = useMemo(() => createRowStyles(colors), [colors]);
   return (
     <Pressable style={rowStyles.container} onPress={onPress}>
       <View style={[rowStyles.iconWrap, { backgroundColor: `${iconColor}20` }]}>
@@ -332,7 +398,7 @@ function SettingsRow({ icon, iconColor, label, value, onPress, showChevron }: Se
       <Text style={rowStyles.label}>{label}</Text>
       <View style={rowStyles.right}>
         {value && <Text style={rowStyles.value}>{value}</Text>}
-        {showChevron && <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />}
+        {showChevron && <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />}
       </View>
     </Pressable>
   );
@@ -346,6 +412,8 @@ interface NotificationRowProps {
   onChange: (value: boolean) => void;
 }
 function NotificationRow({ icon, iconColor, label, value, onChange }: NotificationRowProps) {
+  const { colors } = useAppTheme();
+  const rowStyles = useMemo(() => createRowStyles(colors), [colors]);
   return (
     <View style={rowStyles.container}>
       <View style={[rowStyles.iconWrap, { backgroundColor: `${iconColor}20` }]}>
@@ -355,8 +423,8 @@ function NotificationRow({ icon, iconColor, label, value, onChange }: Notificati
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: '#E5E7EB', true: '#6EE7B7' }}
-        thumbColor={value ? '#10B981' : '#9CA3AF'}
+        trackColor={{ false: colors.border, true: colors.successLight }}
+        thumbColor={value ? colors.primary : colors.textMuted}
       />
     </View>
   );
@@ -369,6 +437,8 @@ interface FAQItemProps {
   onToggle: () => void;
 }
 function FAQItem({ question, answer, expanded, onToggle }: FAQItemProps) {
+  const { colors } = useAppTheme();
+  const faqStyles = useMemo(() => createFaqStyles(colors), [colors]);
   return (
     <View style={faqStyles.item}>
       <Pressable style={faqStyles.question} onPress={onToggle}>
@@ -376,7 +446,7 @@ function FAQItem({ question, answer, expanded, onToggle }: FAQItemProps) {
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={18}
-          color="#6B7280"
+          color={colors.textSecondary}
         />
       </Pressable>
       {expanded && <Text style={faqStyles.answer}>{answer}</Text>}
@@ -385,25 +455,25 @@ function FAQItem({ question, answer, expanded, onToggle }: FAQItemProps) {
 }
 
 // ── Styles ─────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: colors.text },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     margin: 16,
     padding: 16,
     borderRadius: 16,
     gap: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -413,50 +483,50 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: isDark ? `${colors.primary}20` : colors.successLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   userInfo: { flex: 1 },
-  userName: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
+  userName: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 4 },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  userLocation: { fontSize: 13, color: '#6B7280' },
-  locationResolving: { fontSize: 13, color: '#10B981', marginLeft: 6 },
+  userLocation: { fontSize: 13, color: colors.textSecondary },
+  locationResolving: { fontSize: 13, color: colors.primary, marginLeft: 6 },
   grantLocationBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: isDark ? `${colors.info}20` : colors.infoLight,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
     alignSelf: 'flex-start',
   },
-  grantLocationText: { fontSize: 12, color: '#3B82F6', fontWeight: '600' },
+  grantLocationText: { fontSize: 12, color: colors.info, fontWeight: '600' },
   locationBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginHorizontal: 16,
     marginBottom: 8,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: isDark ? `${colors.info}20` : '#EFF6FF',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: isDark ? colors.border : '#BFDBFE',
   },
-  bannerTitle: { fontSize: 14, fontWeight: '700', color: '#1D4ED8' },
-  bannerDesc: { fontSize: 12, color: '#3B82F6', marginTop: 2, lineHeight: 16 },
+  bannerTitle: { fontSize: 14, fontWeight: '700', color: isDark ? colors.info : '#1D4ED8' },
+  bannerDesc: { fontSize: 12, color: colors.info, marginTop: 2, lineHeight: 16 },
   faqContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     marginHorizontal: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
@@ -469,32 +539,80 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     padding: 16,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: isDark ? `${colors.danger}20` : colors.dangerLight,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: isDark ? colors.border : '#FECACA',
   },
-  logoutText: { fontSize: 16, fontWeight: '600', color: '#EF4444' },
+  logoutText: { fontSize: 16, fontWeight: '600', color: colors.danger },
   versionInfo: { alignItems: 'center', paddingVertical: 20 },
-  versionText: { fontSize: 12, color: '#9CA3AF' },
+  versionText: { fontSize: 12, color: colors.textMuted },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalOptionActive: {
+    backgroundColor: colors.surfaceActive,
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  modalOptionTextActive: {
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  modalCancel: {
+    marginTop: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.danger,
+  },
 });
 
-const sectionStyles = StyleSheet.create({
+const createSectionStyles = (colors: ColorPalette) => StyleSheet.create({
   container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 },
   text: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6B7280',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
 });
 
-const rowStyles = StyleSheet.create({
+const createRowStyles = (colors: ColorPalette) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     marginHorizontal: 16,
     marginBottom: 1,
     paddingHorizontal: 16,
@@ -508,25 +626,25 @@ const rowStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  label: { flex: 1, fontSize: 15, color: '#111827' },
+  label: { flex: 1, fontSize: 15, color: colors.text },
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  value: { fontSize: 14, color: '#6B7280' },
+  value: { fontSize: 14, color: colors.textSecondary },
 });
 
-const faqStyles = StyleSheet.create({
-  item: { borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+const createFaqStyles = (colors: ColorPalette) => StyleSheet.create({
+  item: { borderBottomWidth: 1, borderBottomColor: colors.border },
   question: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
   },
-  questionText: { flex: 1, fontSize: 14, fontWeight: '600', color: '#111827' },
+  questionText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
   answer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textSecondary,
     lineHeight: 22,
   },
 });

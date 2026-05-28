@@ -13,6 +13,9 @@ import {
   Lightbulb,
   ChevronRight
 } from 'lucide-react-native';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface InsightCardProps {
   insight: Insight;
@@ -21,13 +24,16 @@ interface InsightCardProps {
 }
 
 export const InsightCard: React.FC<InsightCardProps> = ({ insight, onPress, compact = false }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
   const getSeverityStyle = (severity: Insight['severity']) => {
     switch (severity) {
-      case 'low': return { bg: '#ECFDF5', text: '#10B981', border: '#10B981' };
-      case 'medium': return { bg: '#FFFBEB', text: '#F59E0B', border: '#FCD34D' };
-      case 'high': return { bg: '#FEF2F2', text: '#EF4444', border: '#FCA5A5' };
-      case 'critical': return { bg: '#FEF2F2', text: '#DC2626', border: '#DC2626' };
-      default: return { bg: '#F9FAFB', text: '#6B7280', border: '#E5E7EB' };
+      case 'low': return { bg: isDark ? `${colors.success}20` : colors.successLight, text: colors.success, border: colors.success };
+      case 'medium': return { bg: isDark ? `${colors.warning}20` : colors.warningLight, text: colors.warning, border: colors.warning };
+      case 'high': return { bg: isDark ? `${colors.danger}20` : colors.dangerLight, text: colors.danger, border: colors.danger };
+      case 'critical': return { bg: isDark ? `${colors.danger}40` : colors.dangerLight, text: colors.danger, border: colors.danger };
+      default: return { bg: isDark ? `${colors.info}20` : colors.infoLight, text: colors.info, border: colors.info };
     }
   };
 
@@ -52,7 +58,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ insight, onPress, comp
       style={[
         styles.card, 
         compact ? styles.cardCompact : undefined,
-        { borderColor: severityStyle.border + '40', backgroundColor: '#FFFFFF' }
+        { borderColor: severityStyle.border + '40', backgroundColor: colors.card }
       ]}
     >
       <View style={styles.header}>
@@ -79,7 +85,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ insight, onPress, comp
       {!compact && insight.recommendation && (
         <View style={styles.recommendationContainer}>
           <View style={styles.recommendationHeader}>
-            <Lightbulb size={14} color="#F59E0B" />
+            <Lightbulb size={14} color={colors.warning} />
             <Text style={styles.recommendationLabel}>Recommendation</Text>
           </View>
           <Text style={styles.recommendation}>{insight.recommendation}</Text>
@@ -96,13 +102,13 @@ export const InsightCard: React.FC<InsightCardProps> = ({ insight, onPress, comp
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   card: {
     marginBottom: 16,
     borderWidth: 1,
     padding: 20,
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -131,12 +137,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 2,
   },
   timestamp: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   severityBadge: {
     paddingHorizontal: 8,
@@ -152,16 +158,16 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: '#4B5563',
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 16,
   },
   recommendationContainer: {
-    backgroundColor: '#FFFBEB',
+    backgroundColor: isDark ? `${colors.warning}15` : colors.warningLight,
     padding: 14,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
+    borderLeftColor: colors.warning,
   },
   recommendationHeader: {
     flexDirection: 'row',
@@ -171,12 +177,12 @@ const styles = StyleSheet.create({
   recommendationLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#D97706',
+    color: colors.warning,
     marginLeft: 6,
   },
   recommendation: {
     fontSize: 14,
-    color: '#92400E',
+    color: colors.text,
     lineHeight: 22,
   },
   actionRow: {

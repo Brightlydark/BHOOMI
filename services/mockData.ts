@@ -61,7 +61,7 @@ export const generateNearbyFarms = (
     'Suresh Organic Farm',
     'Ganesh Crop Fields',
     'Village Farm House',
-    'Smart Agri Center',
+    'BHOOMI Demo Farm',
     'Modern Farming Hub',
     'Eco Farm Solutions',
     'Precision Agri Plot',
@@ -476,3 +476,104 @@ export const generateCropSuggestions = (
 
   return suggestions.sort((a, b) => b.suitability - a.suitability);
 };
+
+/**
+ * Generate realistic crop-specific insights for a newly added farm.
+ * Used immediately after addFarm to make the app feel intelligent.
+ */
+export const generateFarmInsights = (farm: Farm): Insight[] => {
+  const now = new Date();
+  const insights: Insight[] = [];
+  const crop = farm.cropType || 'your crop';
+  const id = () => `user_insight_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  // Irrigation insight based on moisture
+  if (farm.soilMoisture < 45) {
+    insights.push({
+      id: id(),
+      farmId: farm.id,
+      type: 'irrigation_recommendation',
+      title: 'Irrigation Recommended',
+      description: `Soil moisture at ${farm.soilMoisture}% — below optimal range for ${crop}. Schedule irrigation within the next 24 hours to prevent stress.`,
+      recommendation: `Apply 30–40mm of water via drip or sprinkler in the early morning (5–7 AM). Re-check moisture 6 hours after irrigation.`,
+      severity: farm.soilMoisture < 35 ? 'critical' : 'high',
+      createdAt: now,
+    });
+  } else if (farm.soilMoisture > 80) {
+    insights.push({
+      id: id(),
+      farmId: farm.id,
+      type: 'irrigation_recommendation',
+      title: 'Excess Moisture Detected',
+      description: `Soil moisture at ${farm.soilMoisture}% — too high for ${crop}. Risk of waterlogging and root rot.`,
+      recommendation: `Improve drainage channels around the field. Pause irrigation for at least 48 hours and monitor for early signs of fungal disease.`,
+      severity: 'medium',
+      createdAt: now,
+    });
+  }
+
+  // Temperature/heat stress insight
+  if (farm.temperature > 33) {
+    insights.push({
+      id: id(),
+      farmId: farm.id,
+      type: 'weather_forecast',
+      title: 'Heat Stress Alert',
+      description: `Temperature at ${farm.temperature}°C is above the stress threshold for ${crop}. Expect reduced photosynthesis and possible leaf scorch.`,
+      recommendation: `Apply light shade netting if available. Increase irrigation to 2× per day and irrigate in early morning or evening only.`,
+      severity: 'high',
+      createdAt: now,
+    });
+  }
+
+  // Soil health insight
+  insights.push({
+    id: id(),
+    farmId: farm.id,
+    type: 'soil_analysis',
+    title: 'Initial Soil Assessment',
+    description: `Baseline soil analysis for ${farm.name}. Moisture: ${farm.soilMoisture}%, temperature: ${farm.temperature}°C. Crop health is ${farm.cropHealth}.`,
+    recommendation: `Conduct a full NPK soil test within the first 2 weeks. Maintain pH between 6.0–7.5. ${crop} responds well to organic matter amendments.`,
+    severity: farm.cropHealth === 'good' ? 'low' : farm.cropHealth === 'moderate' ? 'medium' : 'high',
+    createdAt: now,
+  });
+
+  // Crop-specific fertilizer insight
+  const cropFertMap: Record<string, string> = {
+    Rice: 'Apply urea at 30 kg/ha at tillering stage. Use DAP at basal.',
+    Wheat: 'Use DAP (18:46:0) at sowing; top-dress with urea at crown root initiation.',
+    Cotton: 'Apply potash-rich fertilizers at boll formation; monitor for boll weevils.',
+    Sugarcane: 'Apply FYM 25 t/ha at planting; split nitrogen into 3 doses.',
+    Tomato: 'Use calcium-boron spray weekly to prevent blossom-end rot.',
+    Millets: 'Low-input crop — apply compost at 2 t/ha for best results.',
+    Vegetables: 'Use 19:19:19 NPK at transplanting; foliar feed fortnightly.',
+  };
+
+  const fertTip = cropFertMap[crop] ?? `Follow recommended NPK schedule for ${crop} in your region. Test soil before application.`;
+  insights.push({
+    id: id(),
+    farmId: farm.id,
+    type: 'fertilizer_recommendation',
+    title: `${crop} Fertilizer Guide`,
+    description: `Crop-specific fertilizer recommendations for ${crop} at ${farm.name} to maximise yield.`,
+    recommendation: fertTip + ' Avoid over-fertilization — it causes salt burn and soil acidification.',
+    severity: 'low',
+    createdAt: now,
+  });
+
+  // AI-powered crop tip
+  insights.push({
+    id: id(),
+    farmId: farm.id,
+    type: 'crop_suggestion',
+    title: 'BHOOMI AI Crop Tip',
+    description: `Based on current conditions at ${farm.name} (moisture: ${farm.soilMoisture}%, temp: ${farm.temperature}°C), BHOOMI AI recommends proactive field management.`,
+    recommendation: `Scout the field every 7 days for early pest detection. Keep a farm diary — log weekly readings to track trends. Pair with a drip irrigation system for up to 40% water savings.`,
+    severity: 'low',
+    createdAt: now,
+  });
+
+  return insights;
+};
+
+

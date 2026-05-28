@@ -1,5 +1,5 @@
 // app/(tabs)/insights.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import { useFarmStore } from '../../store/farmStore';
 import { useLocation } from '../../hooks/useLocation';
 import { useFarms } from '../../hooks/useFarms';
 import { Insight, InsightType } from '../../types/insight';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
 
 // Filter tabs
 const FILTER_TABS: { key: 'all' | InsightType; labelKey: string; icon: string }[] = [
@@ -46,6 +48,9 @@ export default function InsightsScreen() {
 
   const [activeFilter, setActiveFilter] = useState<'all' | InsightType>('all');
   const [refreshing, setRefreshing] = useState(false);
+
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -131,22 +136,22 @@ export default function InsightsScreen() {
         <View style={styles.summaryRow}>
           <SummaryCard
             icon="flash"
-            iconColor="#10B981"
-            bg="#ECFDF5"
+            iconColor={colors.primary}
+            bg={isDark ? `${colors.primary}20` : colors.successLight}
             label="Total Insights"
             value={String(farmFilteredInsights.length)}
           />
           <SummaryCard
             icon="warning"
-            iconColor="#EF4444"
-            bg="#FEF2F2"
+            iconColor={colors.danger}
+            bg={isDark ? `${colors.danger}20` : colors.dangerLight}
             label="Alerts"
             value={String(currentCriticalCount)}
           />
           <SummaryCard
             icon="business"
-            iconColor="#3B82F6"
-            bg="#EFF6FF"
+            iconColor={colors.info}
+            bg={isDark ? `${colors.info}20` : colors.infoLight}
             label={selectedFarm ? "Active Field" : "Fields"}
             value={selectedFarm ? "1" : String(farms.length)}
           />
@@ -175,8 +180,8 @@ export default function InsightsScreen() {
               >
                 <Ionicons
                   name={tab.icon as any}
-                  size={14}
-                  color={activeFilter === tab.key ? '#FFFFFF' : '#6B7280'}
+                  size={16}
+                  color={activeFilter === tab.key ? colors.textInverse || '#FFFFFF' : colors.textSecondary}
                 />
                 <Text
                   style={[
@@ -190,7 +195,7 @@ export default function InsightsScreen() {
                   <View
                     style={[
                       styles.filterCount,
-                      activeFilter === tab.key ? styles.filterCountActive : null,
+                      activeFilter === tab.key && styles.filterCountActive,
                     ]}
                   >
                     <Text
@@ -209,7 +214,6 @@ export default function InsightsScreen() {
         </ScrollView>
       )}
 
-      {/* Content */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[
@@ -220,7 +224,7 @@ export default function InsightsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#059669"
+            tintColor={colors.primary}
           />
         }
       >
@@ -256,44 +260,36 @@ export default function InsightsScreen() {
   );
 }
 
-// ── Summary Card ─────────────────────────────────────────────
-interface SummaryCardProps {
-  icon: string;
-  iconColor: string;
-  bg: string;
-  label: string;
-  value: string;
-}
-
-function SummaryCard({ icon, iconColor, bg, label, value }: SummaryCardProps) {
+function SummaryCard({ icon, iconColor, bg, label, value }: { icon: string; iconColor: string; bg: string; label: string; value: string; }) {
+  const { colors } = useAppTheme();
+  const summaryStyles = useMemo(() => createSummaryStyles(colors), [colors]);
   return (
-    <View style={styles.summaryCard}>
-      <View style={[styles.summaryIconBg, { backgroundColor: bg }]}>
+    <View style={summaryStyles.summaryCard}>
+      <View style={[summaryStyles.summaryIconBg, { backgroundColor: bg }]}>
         <Ionicons name={icon as any} size={22} color={iconColor} />
       </View>
-      <View style={styles.summaryTextContainer}>
-        <Text style={styles.summaryValue}>{value}</Text>
-        <Text style={styles.summaryLabel}>{label}</Text>
+      <View style={summaryStyles.summaryTextContainer}>
+        <Text style={summaryStyles.summaryValue}>{value}</Text>
+        <Text style={summaryStyles.summaryLabel}>{label}</Text>
       </View>
     </View>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: colors.border,
   },
   headerTextContainer: {
     flex: 1,
@@ -302,17 +298,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#111827',
+    color: colors.text,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 1,
   },
   alertBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -324,7 +320,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   farmSelectorScroll: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
     maxHeight: 56,
   },
   farmSelectorContainer: {
@@ -337,46 +333,114 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     maxWidth: 200,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   farmTabActive: {
-    backgroundColor: '#111827',
-    borderColor: '#111827',
+    backgroundColor: isDark ? `${colors.primary}20` : colors.text,
+    borderColor: isDark ? colors.primary : colors.text,
   },
   farmTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4B5563',
+    color: colors.textSecondary,
   },
   farmTabTextActive: {
-    color: '#FFFFFF',
+    color: isDark ? colors.primary : '#FFFFFF',
   },
   summaryRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
+  filterScroll: {
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    maxHeight: 60,
+  },
+  filterContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+    flexDirection: 'row',
+  },
+  filterTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterTabActive: {
+    backgroundColor: isDark ? `${colors.primary}20` : (colors.success || '#059669'),
+    borderColor: isDark ? colors.primary : (colors.success || '#059669'),
+  },
+  filterTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  filterTabTextActive: {
+    color: isDark ? colors.primary : '#FFFFFF',
+  },
+  filterCount: {
+    backgroundColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    minWidth: 18,
+    alignItems: 'center',
+  },
+  filterCountActive: {
+    backgroundColor: isDark ? `${colors.primary}40` : '#FFFFFF30',
+  },
+  filterCountText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  filterCountTextActive: {
+    color: isDark ? colors.primary : '#FFFFFF',
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  emptyScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: 400,
+  }
+});
+
+const createSummaryStyles = (colors: ColorPalette) => StyleSheet.create({
   summaryCard: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 18,
     paddingHorizontal: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 20,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
@@ -396,80 +460,12 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#111827',
+    color: colors.text,
   },
   summaryLabel: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '600',
   },
-  filterScroll: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    maxHeight: 60,
-  },
-  filterContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
-    flexDirection: 'row',
-  },
-  filterTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-  },
-  filterTabActive: {
-    backgroundColor: '#059669', // softer emerald
-    borderColor: '#059669',
-  },
-  filterTabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  filterTabTextActive: {
-    color: '#FFFFFF',
-  },
-  filterCount: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    minWidth: 18,
-    alignItems: 'center',
-  },
-  filterCountActive: {
-    backgroundColor: '#FFFFFF30',
-  },
-  filterCountText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#374151',
-  },
-  filterCountTextActive: {
-    color: '#FFFFFF',
-  },
-  contentPadding: {
-    padding: 16,
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  emptyScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    minHeight: 400,
-  }
 });

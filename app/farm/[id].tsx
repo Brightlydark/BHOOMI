@@ -9,6 +9,8 @@ import { useLocation } from '../../hooks/useLocation';
 import { MetricChart } from '../../components/charts/MetricChart';
 import { WeatherCard } from '../../components/common/WeatherCard';
 import { Card } from '../../components/common/Card';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
 
 export default function FarmDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -16,6 +18,9 @@ export default function FarmDetailScreen() {
   const { location } = useLocation();
   const { farms } = useFarms(location);
   
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
   const farm = useMemo(() => farms.find(f => f.id === id), [id, farms]);
 
   if (!farm) {
@@ -41,16 +46,16 @@ export default function FarmDetailScreen() {
   }));
 
   const getHealthColor = (health: string) => {
-    if (health === 'good') return '#10B981';
-    if (health === 'moderate') return '#F59E0B';
-    return '#EF4444';
+    if (health === 'good') return colors.success;
+    if (health === 'moderate') return colors.warning;
+    return colors.danger;
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
-          <ArrowLeft color="#374151" size={24} />
+          <ArrowLeft color={colors.text} size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{farm.name}</Text>
         <View style={{ width: 40 }} />
@@ -61,23 +66,23 @@ export default function FarmDetailScreen() {
         {/* Quick Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <View style={[styles.iconCircle, { backgroundColor: '#DBEAFE' }]}>
-              <Droplets color="#3B82F6" size={20} />
+            <View style={[styles.iconCircle, { backgroundColor: isDark ? `${colors.info}20` : '#DBEAFE' }]}>
+              <Droplets color={colors.info} size={20} />
             </View>
             <Text style={styles.statValue}>{farm.soilMoisture}%</Text>
             <Text style={styles.statLabel}>Moisture</Text>
           </View>
           
           <View style={styles.statBox}>
-            <View style={[styles.iconCircle, { backgroundColor: '#FEE2E2' }]}>
-              <Thermometer color="#EF4444" size={20} />
+            <View style={[styles.iconCircle, { backgroundColor: isDark ? `${colors.danger}20` : '#FEE2E2' }]}>
+              <Thermometer color={colors.danger} size={20} />
             </View>
             <Text style={styles.statValue}>{farm.temperature}°C</Text>
             <Text style={styles.statLabel}>Temperature</Text>
           </View>
 
           <View style={styles.statBox}>
-            <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
+            <View style={[styles.iconCircle, { backgroundColor: isDark ? `${getHealthColor(farm.cropHealth)}20` : '#ECFDF5' }]}>
               <Sprout color={getHealthColor(farm.cropHealth)} size={20} />
             </View>
             <Text style={[styles.statValue, { color: getHealthColor(farm.cropHealth) }]}>
@@ -103,14 +108,14 @@ export default function FarmDetailScreen() {
         <MetricChart 
           title="Soil Moisture History (Last 7 Days)" 
           data={moistureData} 
-          color="#3B82F6" 
+          color={colors.info} 
           suffix="%" 
         />
         
         <MetricChart 
           title="Temperature History (Last 7 Days)" 
           data={temperatureData} 
-          color="#EF4444" 
+          color={colors.danger} 
           suffix="°C" 
         />
 
@@ -119,7 +124,7 @@ export default function FarmDetailScreen() {
           <Text style={styles.listTitle}>Crop Recommendations</Text>
           {['Apply NPK Fertilizer', 'Check for stem borers', 'Increase irrigation frequency'].map((rec, i) => (
             <View key={i} style={styles.listItem}>
-              <CheckCircle2 color="#10B981" size={20} />
+              <CheckCircle2 color={colors.success} size={20} />
               <Text style={styles.listText}>{rec}</Text>
             </View>
           ))}
@@ -139,14 +144,14 @@ export default function FarmDetailScreen() {
                 <Text style={styles.listText}>{activity.action}</Text>
                 <Text style={styles.timeText}>{activity.time}</Text>
               </View>
-              <ChevronRight color="#9CA3AF" size={16} />
+              <ChevronRight color={colors.textMuted} size={16} />
             </View>
           ))}
         </Card>
 
         {/* Action Buttons */}
         <TouchableOpacity style={styles.actionButton}>
-          <ShieldAlert color="#FFFFFF" size={20} />
+          <ShieldAlert color={colors.textInverse || '#FFFFFF'} size={20} />
           <Text style={styles.actionButtonText}>Report Issue</Text>
         </TouchableOpacity>
 
@@ -155,10 +160,10 @@ export default function FarmDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -166,9 +171,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: colors.border,
   },
   iconButton: {
     width: 40,
@@ -179,7 +184,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     flex: 1,
     textAlign: 'center',
   },
@@ -189,19 +194,19 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: '#EF4444',
+    color: colors.danger,
     textAlign: 'center',
     marginTop: 40,
   },
   backButton: {
     padding: 16,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.border,
     borderRadius: 8,
     alignSelf: 'center',
     marginTop: 20,
   },
   backText: {
-    color: '#374151',
+    color: colors.text,
     fontWeight: '600',
   },
   statsRow: {
@@ -210,13 +215,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   statBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     flex: 1,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
     marginHorizontal: 4,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -233,11 +238,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   infoCard: {
@@ -246,22 +251,22 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
     marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    color: '#4B5563',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   distanceText: {
     fontSize: 14,
-    color: '#10B981',
+    color: colors.success,
     fontWeight: '500',
     marginTop: 8,
   },
   actionButton: {
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.danger,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -270,7 +275,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse || '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
@@ -282,7 +287,7 @@ const styles = StyleSheet.create({
   listTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 12,
   },
   listItem: {
@@ -290,17 +295,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: colors.border,
   },
   listText: {
     fontSize: 14,
-    color: '#374151',
+    color: colors.text,
     marginLeft: 12,
     flex: 1,
   },
   timeText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.textMuted,
     marginLeft: 12,
     marginTop: 2,
   },
@@ -308,7 +313,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#3B82F6',
+    backgroundColor: colors.info,
     marginLeft: 6,
   }
 });

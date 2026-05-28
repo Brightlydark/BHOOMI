@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "Smart Agriculture",
-    "slug": "smart-agriculture",
+    "name": "BHOOMI",
+    "slug": "bhoomi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#10B981"
+      "backgroundColor": "#020d08"
     },
     "plugins": [
       "expo-router",
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Smart Agriculture to access your location to show nearby farms.",
-          "locationWhenInUsePermission": "Allow Smart Agriculture to access your location to show nearby farms."
+          "locationAlwaysAndWhenInUsePermission": "Allow BHOOMI to access your location to show nearby farms.",
+          "locationWhenInUsePermission": "Allow BHOOMI to access your location to show nearby farms."
         }
       ],
       "expo-asset",
@@ -26,7 +26,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#10B981"
+        "backgroundColor": "#020d08"
       },
       "permissions": [
         "ACCESS_FINE_LOCATION",
@@ -36,11 +36,11 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Allow Smart Agriculture to access your location to show nearby farms.",
-        "NSLocationAlwaysUsageDescription": "Allow Smart Agriculture to access your location to show nearby farms."
+        "NSLocationWhenInUseUsageDescription": "Allow BHOOMI to access your location to show nearby farms.",
+        "NSLocationAlwaysUsageDescription": "Allow BHOOMI to access your location to show nearby farms."
       }
     },
-    "scheme": "smart-agri",
+    "scheme": "bhoomi",
     "web": {
       "bundler": "metro"
     }

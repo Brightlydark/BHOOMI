@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'reac
 import { useTranslation } from 'react-i18next';
 import { useUserStore } from '../../store/userStore';
 import { Ionicons } from '@expo/vector-icons';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface LanguageSwitcherProps {
   currentLanguage?: 'en' | 'hi' | 'kn';
@@ -17,6 +20,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const { preferences, setLanguage } = useUserStore();
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
@@ -41,7 +46,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         <Text style={styles.sectionTitle}>{t('profile.selectLanguage')}</Text>
         {onClose && (
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#6B7280" />
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
@@ -59,7 +64,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             <Text style={styles.languageSubtext}>{language.name}</Text>
           </View>
           {activeLanguage === language.code && (
-            <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+            <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
           )}
         </TouchableOpacity>
       ))}
@@ -82,14 +87,14 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   return listContent;
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: {
     marginVertical: 16,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
+    color: colors.textSecondary,
     marginBottom: 12,
     textTransform: 'uppercase',
   },
@@ -98,15 +103,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   selectedOption: {
-    borderColor: '#10B981',
-    backgroundColor: '#ECFDF5',
+    borderColor: colors.primary,
+    backgroundColor: isDark ? `${colors.primary}20` : colors.successLight,
   },
   languageInfo: {
     flex: 1,
@@ -114,12 +119,12 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 2,
   },
   languageSubtext: {
     fontSize: 13,
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
@@ -130,7 +135,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   modalContent: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,

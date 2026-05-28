@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Insight } from '../types/insight';
 import { Farm } from '../types/farm';
 import { fetchInsights } from '../services/farmService';
+import { loadUserInsights } from '../services/insightStore';
 
 interface UseInsightsReturn {
   insights: Insight[];
@@ -12,6 +13,22 @@ interface UseInsightsReturn {
   getInsightsByType: (type: Insight['type']) => Insight[];
   criticalCount: number;
 }
+
+const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+
+const mergeAndSort = (base: Insight[], user: Insight[]): Insight[] => {
+  const seenIds = new Set<string>();
+  const combined: Insight[] = [];
+  for (const ins of [...user, ...base]) {
+    if (!seenIds.has(ins.id)) {
+      seenIds.add(ins.id);
+      combined.push(ins);
+    }
+  }
+  return combined.sort(
+    (a, b) => severityOrder[a.severity] - severityOrder[b.severity]
+  );
+};
 
 export const useInsights = (farms: Farm[], region?: string): UseInsightsReturn => {
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -25,11 +42,11 @@ export const useInsights = (farms: Farm[], region?: string): UseInsightsReturn =
     setError(null);
 
     try {
-      const result = await fetchInsights(farms, region);
-      // Sort: critical → high → medium → low
-      const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      result.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-      setInsights(result);
+      const [base, user] = await Promise.all([
+        fetchInsights(farms, region),
+        loadUserInsights(),
+      ]);
+      setInsights(mergeAndSort(base, user));
     } catch (err) {
       setError('Failed to load insights');
     } finally {
@@ -41,8 +58,11 @@ export const useInsights = (farms: Farm[], region?: string): UseInsightsReturn =
     if (farms.length === 0) return;
     setLoading(true);
     try {
-      const result = await fetchInsights(farms, region, false); // skip cache
-      setInsights(result);
+      const [base, user] = await Promise.all([
+        fetchInsights(farms, region, false), // skip cache
+        loadUserInsights(),
+      ]);
+      setInsights(mergeAndSort(base, user));
     } catch (err) {
       setError('Refresh failed');
     } finally {

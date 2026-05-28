@@ -20,6 +20,7 @@ export interface User {
 
 export interface UserPreferences {
   language: 'en' | 'hi' | 'kn';
+  theme: 'light' | 'dark' | 'system';
   notifications: NotificationSettings;
   units: {
     temperature: 'celsius' | 'fahrenheit';

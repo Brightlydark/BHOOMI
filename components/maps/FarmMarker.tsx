@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { Farm } from '../../types/farm';
 import { Sprout } from 'lucide-react-native';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface FarmMarkerProps {
   farm: Farm;
@@ -17,6 +20,9 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(0)).current;
+  
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   useEffect(() => {
     Animated.parallel([
@@ -37,10 +43,10 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
 
   const getHealthColor = (health: Farm['cropHealth']) => {
     switch (health) {
-      case 'good': return '#10B981';
-      case 'moderate': return '#F59E0B';
-      case 'poor': return '#EF4444';
-      default: return '#6B7280';
+      case 'good': return colors.success;
+      case 'moderate': return colors.warning;
+      case 'poor': return colors.danger;
+      default: return colors.textSecondary;
     }
   };
 
@@ -63,16 +69,16 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
           style={[
             styles.pill,
             {
-              backgroundColor: isSelected ? '#111827' : '#FFFFFF',
-              borderColor: isSelected ? '#111827' : healthColor,
+              backgroundColor: isSelected ? colors.text : colors.card,
+              borderColor: isSelected ? colors.text : healthColor,
             },
           ]}
         >
           <View style={[styles.iconContainer, { backgroundColor: healthColor + '25' }]}>
-            <Sprout size={13} color={isSelected ? '#FFFFFF' : healthColor} />
+            <Sprout size={13} color={isSelected ? colors.card : healthColor} />
           </View>
           <Text
-            style={[styles.label, { color: isSelected ? '#FFFFFF' : '#111827' }]}
+            style={[styles.label, { color: isSelected ? (colors.textInverse || colors.card) : colors.text }]}
             numberOfLines={1}
           >
             {farm.name.length > 14 ? farm.name.substring(0, 14) + '…' : farm.name}
@@ -81,7 +87,7 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
         <View
           style={[
             styles.triangle,
-            { borderTopColor: isSelected ? '#111827' : healthColor },
+            { borderTopColor: isSelected ? colors.text : healthColor },
           ]}
         />
       </Animated.View>
@@ -89,7 +95,7 @@ export const FarmMarker: React.FC<FarmMarkerProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   markerWrapper: {
     alignItems: 'center',
   },
@@ -100,7 +106,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 20,
     borderWidth: 2,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.18,
     shadowRadius: 5,

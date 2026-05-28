@@ -3,27 +3,33 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AIPrediction } from '../../services/analyticsService';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { ColorPalette } from '../../theme/colors';
+import { useMemo } from 'react';
 
 interface AIPredictionCardProps {
   prediction: AIPrediction;
 }
 
 export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }) => {
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
   const getGradientColors = (): readonly [string, string, ...string[]] => {
     switch (prediction.level) {
-      case 'critical': return ['#FEF2F2', '#FEE2E2'] as const;
-      case 'warning': return ['#FFFBEB', '#FEF3C7'] as const;
+      case 'critical': return isDark ? ['#7F1D1D', '#450A0A'] as const : ['#FEF2F2', '#FEE2E2'] as const;
+      case 'warning': return isDark ? ['#78350F', '#451A03'] as const : ['#FFFBEB', '#FEF3C7'] as const;
       case 'info':
-      default: return ['#F0FDF4', '#DCFCE7'] as const;
+      default: return isDark ? ['#064E3B', '#022C22'] as const : ['#F0FDF4', '#DCFCE7'] as const;
     }
   };
 
   const getIconColor = () => {
     switch (prediction.level) {
-      case 'critical': return '#DC2626';
-      case 'warning': return '#D97706';
+      case 'critical': return colors.danger;
+      case 'warning': return colors.warning;
       case 'info':
-      default: return '#16A34A';
+      default: return colors.success;
     }
   };
 
@@ -48,7 +54,7 @@ export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }
       >
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Ionicons name="sparkles" size={16} color="#8B5CF6" />
+            <Ionicons name="sparkles" size={16} color={colors.primary} />
             <Text style={styles.titleText}>AI Insight</Text>
           </View>
           <View style={styles.confidenceBadge}>
@@ -67,11 +73,12 @@ export const AIPredictionCard: React.FC<AIPredictionCardProps> = ({ prediction }
   );
 };
 
-const styles = StyleSheet.create({
+// ── Styles ─────────────────────────────────────────────────────
+const createStyles = (colors: ColorPalette, isDark: boolean) => StyleSheet.create({
   container: {
     marginHorizontal: 16,
     marginBottom: 20,
-    shadowColor: '#8B5CF6',
+    shadowColor: isDark ? colors.shadow : '#8B5CF6',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
@@ -81,7 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: isDark ? colors.border : 'rgba(255,255,255,0.8)',
   },
   header: {
     flexDirection: 'row',
@@ -97,22 +104,22 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#4C1D95',
+    color: isDark ? colors.text : '#4C1D95',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   confidenceBadge: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
   },
   confidenceText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#6B7280',
+    color: colors.textSecondary,
   },
   contentRow: {
     flexDirection: 'row',
@@ -130,7 +137,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
-    color: '#1F2937',
+    color: colors.text,
     lineHeight: 20,
   },
 });
