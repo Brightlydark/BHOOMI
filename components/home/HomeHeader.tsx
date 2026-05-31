@@ -14,13 +14,15 @@ interface HomeHeaderProps {
   criticalCount: number;
   avgTemp: number;
   isStable: boolean;
+  onLongPress?: () => void;
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = ({ 
   userName, 
   criticalCount, 
   avgTemp, 
-  isStable 
+  isStable,
+  onLongPress
 }) => {
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
@@ -70,7 +72,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
       
       <View style={styles.content}>
         <View style={styles.topRow}>
-          <View style={styles.userInfo}>
+          <Pressable style={styles.userInfo} onLongPress={onLongPress} delayLongPress={800}>
             <View style={styles.avatarContainer}>
               <Image 
                 source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=059669&color=fff&bold=true` }} 
@@ -81,7 +83,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
               <Text style={styles.greetingText}>{greeting()},</Text>
               <Text style={styles.userName}>{userName}</Text>
             </View>
-          </View>
+          </Pressable>
 
           <Pressable 
             style={styles.notifBtn} 

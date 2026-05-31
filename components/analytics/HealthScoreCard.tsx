@@ -37,7 +37,12 @@ export const HealthScoreCard: React.FC<HealthScoreCardProps> = React.memo(({ hea
         <HealthScoreRing score={healthData.score} color={healthData.color} size={110} />
         
         <View style={styles.infoCol}>
-          <Text style={[styles.stateText, { color: healthData.color }]}>{healthData.state}</Text>
+          <Text style={[styles.stateText, { color: healthData.color }]}>{healthData.scoreCategory}</Text>
+          {healthData.riskLevel !== 'Low' && (
+            <Text style={[styles.riskText, { color: healthData.riskLevel === 'Critical' ? colors.danger : colors.warning }]}>
+              Risk: {healthData.riskLevel}
+            </Text>
+          )}
           <Text style={[styles.insightText, { color: colors.textMuted }]}>{healthData.insight}</Text>
         </View>
       </View>
@@ -60,8 +65,53 @@ export const HealthScoreCard: React.FC<HealthScoreCardProps> = React.memo(({ hea
         ))}
       </View>
 
+      {/* NEW: Top Contributors */}
+      {healthData.topContributors.length > 0 && (
+        <>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.topContributorsContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('analytics.ui.topContributors', 'Top Contributors')}</Text>
+            {healthData.topContributors.map((item, idx) => (
+              <View key={`tc-${idx}`} style={styles.contributorRow}>
+                <Text style={[styles.contributorLabel, { color: colors.textSecondary }]}>• {item.label}</Text>
+                <Text style={[
+                  styles.contributorValue, 
+                  item.status === 'bonus' ? { color: colors.success } : { color: colors.danger }
+                ]}>
+                  ({item.value})
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+
       {detailed && (
         <>
+          {/* NEW: Score Calculation Breakdown */}
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.scoreBreakdownContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('analytics.ui.scoreCalculation', 'Score Calculation')}</Text>
+            {healthData.scoreBreakdown.map((item, idx) => (
+              <View key={`sb-${idx}`} style={styles.scoreRow}>
+                <Text style={[styles.scoreLabel, { color: colors.textSecondary }]}>{item.label}</Text>
+                <Text style={[
+                  styles.scoreValue, 
+                  item.status === 'critical' || item.status === 'warning' ? { color: colors.danger } :
+                  item.status === 'bonus' ? { color: colors.success } :
+                  { color: colors.text }
+                ]}>
+                  {item.value}
+                </Text>
+              </View>
+            ))}
+            <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: 8 }]} />
+            <View style={styles.scoreRow}>
+              <Text style={[styles.scoreLabel, { color: colors.text, fontWeight: '700' }]}>Final Score</Text>
+              <Text style={[styles.scoreValue, { color: colors.text, fontWeight: '800' }]}>{healthData.score}</Text>
+            </View>
+          </View>
+
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           
           <View style={styles.detailedSection}>
@@ -133,8 +183,13 @@ const styles = StyleSheet.create({
   },
   stateText: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: 'bold',
     marginBottom: 4,
+  },
+  riskText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   insightText: {
     fontSize: 13,
@@ -181,5 +236,44 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 4,
     marginLeft: 4,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  scoreBreakdownContainer: {
+    paddingVertical: 4,
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  scoreLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  scoreValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  topContributorsContainer: {
+    paddingVertical: 4,
+  },
+  contributorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  contributorLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  contributorValue: {
+    fontSize: 14,
+    fontWeight: '600',
   }
 });

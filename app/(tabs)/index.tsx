@@ -46,6 +46,7 @@ import {
 import { AIPredictionCard } from '../../components/analytics/AIPredictionCard';
 import { HomeHeader } from '../../components/home/HomeHeader';
 import { WeatherCard } from '../../components/common/WeatherCard';
+import { DevTestPanel } from '../../components/dev/DevTestPanel';
 // Health status styling
 const healthColors: Record<CropHealthStatus, { bg: string; text: string; icon: string }> = {
   good: { bg: '#ECFDF5', text: '#059669', icon: '🌿' },
@@ -65,6 +66,7 @@ export default function HomeScreen() {
   );
   const [refreshing, setRefreshing] = useState(false);
   const [timeframe, setTimeframe] = useState<7 | 30 | 90>(7);
+  const [devPanelVisible, setDevPanelVisible] = useState(false);
 
   const { colors, isDark } = useAppTheme();
   const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
@@ -123,6 +125,7 @@ export default function HomeScreen() {
           criticalCount={criticalCount}
           avgTemp={avgTemp}
           isStable={(healthCounts.poor ?? 0) === 0 && (healthCounts.moderate ?? 0) === 0}
+          onLongPress={() => setDevPanelVisible(true)}
         />
 
         {/* Farm Selector */}
@@ -285,10 +288,10 @@ export default function HomeScreen() {
               onPress={() => router.push('/(tabs)/insights')}
             />
             <QuickActionCard
-              icon="cloud"
-              label={t('home.actionWeather')}
-              iconColor="#3B82F6"
-              onPress={() => {}}
+              icon="add-circle"
+              label={t('home.actionAddFarm', 'Add Farm')}
+              iconColor="#10B981"
+              onPress={() => router.push('/(tabs)/map')}
             />
             <QuickActionCard
               icon="person"
@@ -300,6 +303,12 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ height: 24 }} />
+
+        {/* DevTestPanel mounted here */}
+        <DevTestPanel 
+          visible={devPanelVisible} 
+          onClose={() => setDevPanelVisible(false)} 
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -357,17 +366,17 @@ function QuickActionCard({ icon, iconColor, label, onPress }: QuickActionProps) 
   const scale = useRef(new Animated.Value(1)).current;
 
   return (
-    <Animated.View style={[{ transform: [{ scale }] }]}>
+    <Animated.View style={[actionStyles.cardWrapper, { transform: [{ scale }] }]}>
       <Pressable 
         style={actionStyles.card} 
         onPress={onPress}
-        onPressIn={() => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true }).start()}
+        onPressIn={() => Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start()}
         onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
       >
-        <View style={[actionStyles.iconBg, { backgroundColor: `${iconColor}15` }]}>
-          <Ionicons name={icon as any} size={24} color={iconColor} />
+        <View style={[actionStyles.iconBg, { backgroundColor: `${iconColor}18` }]}>
+          <Ionicons name={icon as any} size={22} color={iconColor} />
         </View>
-        <Text style={actionStyles.label}>{label}</Text>
+        <Text style={actionStyles.label} numberOfLines={1}>{label}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -503,25 +512,37 @@ const createSectionTitleStyles = (colors: ColorPalette) => StyleSheet.create({
 });
 
 const createActionStyles = (colors: ColorPalette) => StyleSheet.create({
+  cardWrapper: {
+    width: '47%',
+  },
   card: {
-    width: '46%',
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    gap: 12,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: `${colors.border}80`,
   },
   iconBg: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+  label: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+  },
 });
