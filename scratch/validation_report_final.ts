@@ -78,7 +78,7 @@ for (const s of scenarios) {
   totalScenarios++;
   
   const score = scoreFarm(s.farm, s.weather);
-  const health = calculateFarmHealthScore([score], s.farm, s.weather);
+  const health = calculateFarmHealthScore([s.farm], s.farm, s.weather);
   
   const moistureStatus = health.breakdown.find(b => b.label === 'Moisture')?.value;
   const weatherStatus = health.breakdown.find(b => b.label === 'Weather')?.value;

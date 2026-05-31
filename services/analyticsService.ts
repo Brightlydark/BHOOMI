@@ -913,7 +913,8 @@ export const calculateFarmHealthScore = (
     return {
       score: 100,
       baseScore: 100,
-      state: 'Excellent',
+      scoreCategory: 'Excellent',
+      riskLevel: 'Low',
       color: '#10B981',
       insight: 'No farms added yet. Add your first farm on the Map to begin monitoring.',
       trend: 'stable',
@@ -1273,7 +1274,7 @@ export const generateFarmComparison = (farms: Farm[], days = 7) => {
     const s = scoreFarm(farm);
     // Timeframe variance
     const variance = days > 7 ? (days === 30 ? -5 : -10) : 0;
-    const score = Math.min(100, Math.max(0, s + variance));
+    const score = Math.min(100, Math.max(0, s.score + variance));
     return {
       value: score,
       label: farm.name.substring(0, 3).toUpperCase(),
